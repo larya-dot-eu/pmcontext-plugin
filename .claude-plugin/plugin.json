@@ -1,0 +1,8 @@
+{
+  "name": "pmcontext",
+  "description": "PM-Claude session commands — start, execute, resume, close, status. Backed by Supabase.",
+  "version": "1.0.0",
+  "author": {
+    "name": "chris"
+  }
+}
