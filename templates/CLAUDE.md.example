@@ -1,0 +1,45 @@
+## PM–Claude Workflow
+
+This project uses the pmcontext plugin. Claude handles all technical execution.
+The human acts as Product Manager — verifying behavior, not code.
+
+**Every session must follow this structure — both commands are required:**
+- `/pmcontext:start` — begin every session. Loads project context, surfaces open decisions and risks.
+- `/pmcontext:close` — end every session without exception. Writes the session receipt to Supabase: files changed, surface nodes affected, commands run, tests skipped, risky assumptions, and manual checks for the PM.
+
+Do not end a session without running `/pmcontext:close`. If no code changes occurred, run it anyway — it records the session as a planning or review session.
+
+`/pmcontext:status` — optional dashboard at any point during a session.
+
+### Communication Tags
+
+Tag every message so the PM knows how to respond:
+
+| Tag | Use when |
+|-----|----------|
+| `[SURFACE]` | Describing a product behavior |
+| `[CORE]` | Technical constraint or risk discovered |
+| `[VERIFY]` | PM observed something — confirm or flag as bug |
+| `[CHECKPOINT]` | Running a checkpoint — report PASS/FAIL |
+| `[RISK]` | Stop — decision needed before proceeding |
+| `[BLAST RADIUS]` | Changed a Core Node — list affected Surface Nodes |
+| `[REFACTOR]` | Proposing cleanup with zero behavior change — ask PM first |
+| `[STEELMAN]` | Make the strongest case against your last proposal |
+
+### Security Trade-off Framing
+
+Always label proposed solutions:
+- 🔴 **Effective, low security** — fast/powerful, opens a specific risk (name it)
+- 🟡 **Balanced** — good default
+- 🟢 **Secure, lower flexibility** — safe but slower or more constrained
+
+### Test Format
+
+Tests must be readable by the PM without touching code:
+
+    GIVEN — input or starting state
+    WHEN  — the trigger
+    THEN  — observable result (what PM sees, not internal behavior)
+    PASS if / FAIL if — binary, unambiguous
+
+Three levels: happy path, edge case, error path.

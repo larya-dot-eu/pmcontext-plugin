@@ -7,6 +7,15 @@ Claude Code plugin for PM-Claude session management. Tracks open decisions, acti
 - [Claude Code](https://claude.ai/code)
 - Supabase MCP configured in Claude Code
 
+## Recommended Setup
+
+For the best pmcontext experience, especially for remote or multi-device development:
+
+- **OS**: Ubuntu (Linux) — most reliable environment for Claude Code and MCP tooling
+- **Remote access**: [Tailscale](https://tailscale.com) or [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) — lets you reach your dev machine from anywhere and review HTML spec/plan files in a browser on another device
+- **Version control**: GitHub with Claude Code for seamless git integration
+- **Companion plugins**: [`superpowers`](https://github.com/anthropics/claude-plugins-community), [`code-review`](https://github.com/anthropics/claude-plugins-community), [`context7`](https://github.com/upstash/context7)
+
 ## Install
 
 ```bash
@@ -16,7 +25,7 @@ claude plugin install pmcontext@community
 Or directly from this repo:
 
 ```bash
-claude plugin install --from-git github.com/YOUR_USERNAME/pmcontext-plugin
+claude plugin install --from-git github.com/larya-dot-eu/pmcontext-plugin
 ```
 
 ## First-Time Setup (once per machine)
@@ -39,7 +48,8 @@ Safe to re-run — uses `CREATE TABLE IF NOT EXISTS`.
 | Command | What it does |
 |---------|-------------|
 | `/pmcontext:init` | One-time setup — connects Supabase, creates tables, writes `~/.pmcontext` |
-| `/pmcontext:start` | Start of session — loads ROADMAP, surfaces open decisions/risks, suggests next action |
+| `/pmcontext:start` | Start of session — scaffolds missing files, loads project context, surfaces decisions/risks |
+| `/pmcontext:plan` | PM-Claude planning workflow — 5 phases from exploration to adversarial review, produces a plan file |
 | `/pmcontext:execute <plan>` | Executes a plan file end-to-end with TDD, task tracking, and code review |
 | `/pmcontext:resume` | Continues the last paused or active session with no arguments |
 | `/pmcontext:close` | End of session — writes receipt to Supabase, updates project state |
@@ -51,9 +61,18 @@ One Supabase project stores state for all your coding projects. The `project` co
 
 `~/.pmcontext` holds your Supabase project ID. On a new machine: install the plugin, run `/pmcontext:init`, done.
 
+## Typical Workflow
+
+```
+/pmcontext:start          → orient the session, scaffold missing files
+/pmcontext:plan           → 5-phase planning workflow → produces a plan file
+/pmcontext:execute <plan> → execute the plan with TDD and task tracking
+/pmcontext:close          → write session receipt to Supabase
+```
+
 ## Plan Files
 
-Plans written with the `superpowers:writing-plans` skill should include a `## Session Launch` section at the end:
+Plans are created by `/pmcontext:plan` and saved to `docs/superpowers/plans/` (gitignored). Each plan must include a `## Session Launch` section at the end:
 
 ```markdown
 ## Session Launch

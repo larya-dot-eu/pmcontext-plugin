@@ -34,20 +34,45 @@ Wait for user selection. Use the chosen project's `id` as `<PROJECT_ID>` and its
 
 ## Step 2: Write Config File
 
-Run via Bash tool:
+First, locate the pmcontext plugin installation directory via Bash tool:
 ```bash
-echo "SUPABASE_PROJECT_ID=<PROJECT_ID>" > ~/.pmcontext
+find ~/.claude -name "plugin.json" 2>/dev/null | while IFS= read -r f; do
+  if grep -q '"name": "pmcontext"' "$f" 2>/dev/null; then
+    dirname "$(dirname "$f")"
+    break
+  fi
+done
+```
+
+Note the output as `<PLUGIN_DIR>`. If the output is empty, output a warning and set `<PLUGIN_DIR>` to blank:
+```
+[WARN] Could not locate pmcontext plugin directory — template scaffolding will be unavailable.
+Run /pmcontext:init again after confirming the plugin is installed.
+```
+
+Write the config file via Bash tool:
+```bash
+printf "SUPABASE_PROJECT_ID=<PROJECT_ID>\nPLUGIN_DIR=<PLUGIN_DIR>\n" > ~/.pmcontext
 ```
 
 Verify the write succeeded:
 ```bash
 cat ~/.pmcontext
 ```
-Expected output: `SUPABASE_PROJECT_ID=<PROJECT_ID>`
+Expected output includes `SUPABASE_PROJECT_ID=<PROJECT_ID>` and `PLUGIN_DIR=<PLUGIN_DIR>`.
 
 If the file is missing or empty after this step, output and stop:
 ```
 [ERROR] Failed to write ~/.pmcontext — check file permissions.
+```
+
+If `<PLUGIN_DIR>` is set, verify the templates are present:
+```bash
+ls "<PLUGIN_DIR>/templates/"
+```
+If `CONTEXT.md` or `ROADMAP.md` are missing from the output, warn:
+```
+[WARN] Plugin templates incomplete at <PLUGIN_DIR>/templates/ — some scaffolding may be unavailable.
 ```
 
 ## Step 3: Create Tables
@@ -96,10 +121,34 @@ Output:
 ```
 ✓ pmcontext initialized
 
-  Project:   <PROJECT_NAME>
-  ID:        <PROJECT_ID>
-  Config:    ~/.pmcontext
-  Tables:    pm_sessions ✓   pm_state ✓
+  Project:    <PROJECT_NAME>
+  ID:         <PROJECT_ID>
+  Config:     ~/.pmcontext
+  Plugin dir: <PLUGIN_DIR>
+  Tables:     pm_sessions ✓   pm_state ✓
 
 Run /pmcontext:start to begin your first session.
+```
+
+## Step 5: Update Project CLAUDE.md
+
+Check whether the pmcontext workflow block already exists in the project's `CLAUDE.md`:
+```bash
+grep -q "## PM–Claude Workflow" CLAUDE.md 2>/dev/null && echo "exists" || echo "missing"
+```
+
+**If "exists":** output `✓ CLAUDE.md already contains PM–Claude Workflow block — skipped` and stop this step.
+
+**If "missing" and `<PLUGIN_DIR>` is set:**
+Append the template to the project's `CLAUDE.md` (creates the file if it does not exist):
+```bash
+cat "<PLUGIN_DIR>/templates/CLAUDE.md.example" >> CLAUDE.md
+```
+Output: `✓ CLAUDE.md updated`
+
+**If "missing" and `<PLUGIN_DIR>` is blank:**
+Output:
+```
+[WARN] Could not update CLAUDE.md — PLUGIN_DIR not set.
+Run /pmcontext:init again after confirming the plugin is installed, or add the PM–Claude Workflow block manually.
 ```

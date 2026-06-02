@@ -4,15 +4,20 @@ description: Execute a plan file end-to-end with TDD, task tracking, and code re
 
 ## Config
 
-Read the Supabase project ID:
-- Run `cat ~/.pmcontext 2>/dev/null` via Bash tool
-- Extract the value after `SUPABASE_PROJECT_ID=` (trim whitespace)
-- If the file is missing or the value is blank, output and stop:
-  ```
-  [BLOCKED] pmcontext is not configured.
-  Run /pmcontext:init to complete setup.
-  ```
-- Use this value as `<PROJECT_ID>` for the `project_id` parameter in all MCP tool calls below.
+Read the config file via Bash tool:
+```bash
+cat ~/.pmcontext 2>/dev/null
+```
+
+Extract:
+- Value after `SUPABASE_PROJECT_ID=` → `<PROJECT_ID>`
+- Value after `PLUGIN_DIR=` → `<PLUGIN_DIR>`
+
+If the file is missing or `SUPABASE_PROJECT_ID` is blank, output and stop:
+```
+[BLOCKED] pmcontext is not configured.
+Run /pmcontext:init to complete setup.
+```
 
 The plan path is: $ARGUMENTS
 
@@ -31,7 +36,20 @@ Read the plan file at the path provided in $ARGUMENTS. If the file does not exis
 ```
 and stop.
 
-## Step 2: Parse the Session Launch Section
+## Step 2: Load Project Context
+
+Read the following files from the project root if they exist (run checks in parallel via Bash tool):
+```bash
+test -f CONTEXT.md && echo "exists" || echo "missing"
+test -f PROJECT_BRIEF.md && echo "exists" || echo "missing"
+```
+
+- **CONTEXT.md** — PM–Claude protocol, communication tags, Node Model. Use the `[BLAST RADIUS]` tag when a plan step changes a Core Node.
+- **PROJECT_BRIEF.md** — Surface Node Inventory and Core Node Map. Use this to identify which Surface Nodes a plan step may affect.
+
+If either file is missing, continue without it — do not block execution.
+
+## Step 3: Parse the Session Launch Section
 
 Find the `## Session Launch` section at the end of the plan file. Extract:
 - **What this builds** — one sentence summary
@@ -49,7 +67,7 @@ If the `## Session Launch` section is missing, warn:
 Context will be limited. Proceeding with plan execution.
 ```
 
-## Step 3: Prerequisite Check
+## Step 4: Prerequisite Check
 
 **Required — abort if missing:**
 
@@ -81,7 +99,7 @@ Context will be limited. Proceeding with plan execution.
 - `superpowers:using-git-worktrees`:
   `[WARN] superpowers:using-git-worktrees not found — working directly on current branch`
 
-## Step 4: Create Session Row
+## Step 5: Create Session Row
 
 Detect the current project name: run `git rev-parse --show-toplevel` via Bash tool, take basename.
 
@@ -95,41 +113,101 @@ RETURNING id;
 ```
 Note the returned `id` as `<SESSION_ID>`.
 
-## Step 5: Execute the Plan
+## Create Phase Tasks
 
-Invoke the `superpowers:executing-plans` skill to execute the plan task-by-task.
+Create all four phase tasks upfront so the full workflow is visible from the start. Use TaskCreate for each:
 
-Use `TaskCreate` for each plan task to make progress visible.
+1. `Phase 6 — TDD Planning`
+2. `Phase 7 — Implementation`
+3. `Phase 8 — Post-Implementation Review`
+4. `Phase 9 — Living Doc Update`
 
-Before writing any implementation code, invoke the `superpowers:test-driven-development` skill.
+Note each task ID for use in the phases below.
 
-After completing each plan step, run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+---
+
+## Phase 6 — TDD Planning
+
+Mark the Phase 6 task as in_progress.
+
+Before any implementation code is written, define the testing approach for this plan. Invoke the `superpowers:test-driven-development` skill to:
+- Identify which interfaces need to change
+- Agree on test priority order — critical paths first
+- Design each component for testability: inject dependencies, return results instead of side effects, no hidden state
+
+When the test approach and interface design are agreed with the user, mark the Phase 6 task as completed.
+
+---
+
+## Phase 7 — Implementation
+
+Mark the Phase 7 task as in_progress.
+
+Invoke the `superpowers:executing-plans` skill to execute the plan step-by-step. It will create a task for each plan step — these appear in the task list alongside the phase tasks, showing exactly where you are within Phase 7.
+
+After completing each plan step, update Supabase via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 ```sql
 UPDATE pm_sessions
 SET current_step = <completed_step + 1>, updated_at = NOW()
 WHERE id = '<SESSION_ID>';
 ```
 
-If the session ends before all steps are complete (interruption):
+If the session is interrupted before all steps are complete:
 ```sql
 UPDATE pm_sessions
 SET status = 'paused', updated_at = NOW()
 WHERE id = '<SESSION_ID>';
 ```
+Mark the Phase 7 task as in_progress (not completed) and stop. Resume with `/pmcontext:resume`.
 
-## Step 6: Session End
+When all plan steps are complete, mark the Phase 7 task as completed.
 
-When all steps are complete:
+---
 
-1. If `superpowers:requesting-code-review` is available — invoke it before any push.
-   Otherwise, invoke the `code-review` skill if available.
+## Phase 8 — Post-Implementation Review
 
-2. Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+Mark the Phase 8 task as in_progress.
+
+Run code review:
+- If `superpowers:requesting-code-review` is available — invoke it before any push.
+- Otherwise invoke the `code-review` skill if available.
+
+Then check:
+- Did the implementation match the plan? If not, document what changed and why.
+- Did any new constraints or patterns surface that should be added to `CLAUDE.md`?
+- Did any edge cases appear that were not in the spec?
+- Does `ROADMAP.md` need updating?
+
+Report findings to the user. Flag any recommended doc updates. Mark the Phase 8 task as completed.
+
+---
+
+## Phase 9 — Living Doc Update
+
+Mark the Phase 9 task as in_progress.
+
+Apply any doc updates flagged in Phase 8:
+- **`CLAUDE.md`** — add new patterns or constraints established this session
+- **`ROADMAP.md`** — update priorities or direction if they shifted
+
+If new open decisions or risks surfaced during execution, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+```sql
+INSERT INTO pm_state (project, open_decisions, active_risks, updated_at)
+VALUES ('<project>', '<open_decisions_json>', '<active_risks_json>', NOW())
+ON CONFLICT (project) DO UPDATE
+SET
+  open_decisions = EXCLUDED.open_decisions,
+  active_risks   = EXCLUDED.active_risks,
+  updated_at     = NOW();
+```
+
+Update the session row:
 ```sql
 UPDATE pm_sessions
 SET status = 'active', current_step = <total_steps>, updated_at = NOW()
 WHERE id = '<SESSION_ID>';
 ```
-(Leave status as `active` — /pmcontext:close will mark it completed with the receipt.)
 
-3. Prompt: "Plan execution complete. Run /pmcontext:close to write the session receipt."
+Mark the Phase 9 task as completed.
+
+Output: `"Plan execution complete. Run /pmcontext:close to write the session receipt."`

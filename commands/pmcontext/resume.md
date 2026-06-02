@@ -4,15 +4,20 @@ description: Resume last paused or active session from where it left off
 
 ## Config
 
-Read the Supabase project ID:
-- Run `cat ~/.pmcontext 2>/dev/null` via Bash tool
-- Extract the value after `SUPABASE_PROJECT_ID=` (trim whitespace)
-- If the file is missing or the value is blank, output and stop:
-  ```
-  [BLOCKED] pmcontext is not configured.
-  Run /pmcontext:init to complete setup.
-  ```
-- Use this value as `<PROJECT_ID>` for the `project_id` parameter in all MCP tool calls below.
+Read the config file via Bash tool:
+```bash
+cat ~/.pmcontext 2>/dev/null
+```
+
+Extract:
+- Value after `SUPABASE_PROJECT_ID=` → `<PROJECT_ID>`
+- Value after `PLUGIN_DIR=` → `<PLUGIN_DIR>`
+
+If the file is missing or `SUPABASE_PROJECT_ID` is blank, output and stop:
+```
+[BLOCKED] pmcontext is not configured.
+Run /pmcontext:init to complete setup.
+```
 
 Detect the current project name:
 - Run `git rev-parse --show-toplevel` via Bash tool, then take the basename.
@@ -75,6 +80,19 @@ The session record references a file that no longer exists.
 Run /pmcontext:execute <new-plan-path> to start a new session.
 ```
 Stop.
+
+## Load Project Context
+
+Read the following files from the project root if they exist (run checks in parallel via Bash tool):
+```bash
+test -f CONTEXT.md && echo "exists" || echo "missing"
+test -f PROJECT_BRIEF.md && echo "exists" || echo "missing"
+```
+
+- **CONTEXT.md** — PM–Claude protocol, communication tags, Node Model. Use the `[BLAST RADIUS]` tag when a plan step changes a Core Node.
+- **PROJECT_BRIEF.md** — Surface Node Inventory and Core Node Map. Use this to identify which Surface Nodes a plan step may affect.
+
+If either file is missing, continue without it — do not block resumption.
 
 ## Resume Execution
 
