@@ -7,6 +7,8 @@ A Claude Code plugin that transforms how you work with Claude — you become the
 - [Claude Code](https://claude.ai/code)
 - A free [Supabase](https://supabase.com) account with one project
 - Supabase MCP configured in Claude Code (see setup below)
+- [`superpowers`](https://github.com/anthropics/claude-plugins-community) plugin — required for the planning and execution workflow (phase gates, TDD, code review)
+- [`context7`](https://github.com/upstash/context7) MCP — required for Standard and Full tiers when any plan touches external libraries (Phase 3 interface type docs, Phase 4 import scan)
 
 ## Recommended Setup
 
@@ -15,7 +17,7 @@ For the best pmcontext experience, especially for remote or multi-device develop
 - **OS**: Ubuntu (Linux) — most reliable environment for Claude Code and MCP tooling
 - **Remote access**: [Tailscale](https://tailscale.com) or [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) — lets you reach your dev machine from anywhere and review HTML spec/plan files in a browser on another device
 - **Version control**: GitHub with Claude Code for seamless git integration
-- **Companion plugins**: [`superpowers`](https://github.com/anthropics/claude-plugins-community), [`code-review`](https://github.com/anthropics/claude-plugins-community), [`context7`](https://github.com/upstash/context7) — context7 is used during Phase 3 (live docs for third-party interface types) and Phase 4 (library import scan); required when any plan touches external libraries
+- **Companion plugin**: [`code-review`](https://github.com/anthropics/claude-plugins-community) — used during Phase 8 post-implementation review
 
 ## Supabase MCP Setup (one-time)
 
