@@ -11,6 +11,35 @@ Do not end a session without running `/pmcontext:close`. If no code changes occu
 
 `/pmcontext:status` — optional dashboard at any point during a session.
 
+### Planning & Execution Workflow
+
+Run these in order for any non-trivial feature or change:
+
+| Command | When |
+|---------|------|
+| `/pmcontext:plan` | Before any implementation — runs Phases 1–5: context priming, exploration, spec, plan, adversarial review |
+| `/pmcontext:execute <plan-file>` | After the plan is approved — runs Phases 6–9: TDD, implementation, review, living doc update |
+| `/pmcontext:resume` | Continue a paused session |
+
+### Phase Gates
+
+Each phase ends with an explicit exit gate. Claude will stop and ask for your approval before proceeding. Your role at each gate:
+
+| Phase | What Claude reports | Your job |
+|-------|--------------------|----|
+| Prerequisites | Summary of project context loaded | Confirm it's accurate or correct it |
+| Phase 1 — Context Priming | Current architecture, constraints, prior decisions | Confirm understanding is correct |
+| Phase 2 — Exploration | Answers to: why, constraints, what's different | Confirm all three are clearly answered |
+| Phase 3 — Spec Writing | Spec + any conflicts with existing code | Approve spec; reject if assumptions are unverified |
+| Phase 4 — Plan Writing | Plan + answers to 4 checkpoint questions | Approve plan; each checkpoint must have specific findings, not "yes" |
+| Phase 5 — Adversarial Review | Loop-back decision + intermediate state trace | Approve only when plan is structurally sound — this gate protects all of Phase 7 |
+| Phase 6 — TDD Planning | Agreed interfaces + prioritised test list | Confirm before any code is written |
+| Phase 7 — Implementation | All steps complete, all tests passing | Confirm before review starts |
+| Phase 8 — Post-Implementation | Plan vs. reality diff, doc update flags | Confirm findings; flag anything that needs follow-up |
+| Phase 9 — Living Doc Update | CLAUDE.md and ROADMAP.md changes applied | Confirm docs reflect what was actually built |
+
+Claude cannot proceed to the next phase until the current gate is written to Supabase. If a gate is missing, you will see `[BLOCKED]` — go back and complete the phase properly rather than bypassing it.
+
 ### Communication Tags
 
 Tag every message so the PM knows how to respond:

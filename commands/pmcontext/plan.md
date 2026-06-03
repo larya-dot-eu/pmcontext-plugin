@@ -99,6 +99,18 @@ Create all phase tasks now so the full workflow is visible throughout the sessio
 
 Note each task ID. Mark the Prerequisites task as completed now.
 
+## Create Planning Session Row
+
+Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+
+```sql
+INSERT INTO pm_sessions (project, session_type, status, started_at, updated_at)
+VALUES ('<project>', 'planning', 'active', NOW(), NOW())
+RETURNING id;
+```
+
+Note the returned `id` as `<PLANNING_SESSION_ID>`.
+
 ---
 
 ## Phase 1 — Context Priming
@@ -114,13 +126,34 @@ State explicitly:
 - Any prior decisions relevant to this session
 
 **Exit gate:** *"Is this an accurate picture of the project context? Anything to correct or add before we explore the problem?"*
-Do not proceed to Phase 2 until the user confirms. Mark the Phase 1 task as completed.
+Do not proceed to Phase 2 until the user confirms. Then write the Phase 1 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_1', jsonb_build_object('approved_at', NOW())
+),
+updated_at = NOW()
+WHERE id = '<PLANNING_SESSION_ID>';
+```
 
 ---
 
 ## Phase 2 — Exploration (PM Mode)
 
 Mark the Phase 2 task as in_progress.
+
+Verify the Phase 1 gate was recorded before proceeding. Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+
+```sql
+SELECT (phase_gates->>'phase_1') IS NOT NULL AS gate_cleared
+FROM pm_sessions WHERE id = '<PLANNING_SESSION_ID>';
+```
+
+If `gate_cleared = false`, output and stop:
+```
+[BLOCKED] Phase 1 gate not recorded. Complete Phase 1 and confirm with the user before proceeding.
+```
 
 Your role in this phase is to ask clarifying questions only. Do not propose solutions. Do not write specs. Do not suggest implementations.
 
@@ -139,13 +172,39 @@ While exploring, surface:
 2. What are the constraints?
 3. What makes this case different from existing patterns?
 
-If you cannot answer all three clearly — stay in Phase 2. When all three are answered and the user confirms, mark the Phase 2 task as completed.
+If you cannot answer all three clearly — stay in Phase 2. When all three are answered and the user confirms, write the Phase 2 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_2', jsonb_build_object(
+        'why_answered', true,
+        'constraints_answered', true,
+        'difference_answered', true,
+        'approved_at', NOW()
+    )
+),
+updated_at = NOW()
+WHERE id = '<PLANNING_SESSION_ID>';
+```
 
 ---
 
 ## Phase 3 — Spec Writing
 
 Mark the Phase 3 task as in_progress.
+
+Verify the Phase 2 gate was recorded:
+
+```sql
+SELECT (phase_gates->>'phase_2') IS NOT NULL AS gate_cleared
+FROM pm_sessions WHERE id = '<PLANNING_SESSION_ID>';
+```
+
+If `gate_cleared = false`, output and stop:
+```
+[BLOCKED] Phase 2 gate not recorded. The exploration exit gate (why, constraints, difference) must be confirmed before writing a spec.
+```
 
 Write a spec that covers:
 - Behavior and expected outcomes
@@ -161,7 +220,20 @@ Before writing any plan, verify against the codebase:
 
 Report findings explicitly — do not summarize as "looks good." Fix any conflicts or unverified assumptions before proceeding.
 
-**Exit gate:** Spec verified against codebase. No unresolved conflicts. No unverified assumptions. User has approved. Mark the Phase 3 task as completed.
+**Exit gate:** Spec verified against codebase. No unresolved conflicts. No unverified assumptions. User has approved. Write the Phase 3 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_3', jsonb_build_object(
+        'spec_verified', true,
+        'no_conflicts', true,
+        'approved_at', NOW()
+    )
+),
+updated_at = NOW()
+WHERE id = '<PLANNING_SESSION_ID>';
+```
 
 ### Output
 
@@ -185,6 +257,18 @@ To review: `python3 -m http.server 8090` from the project root, then open `http:
 
 Mark the Phase 4 task as in_progress.
 
+Verify the Phase 3 gate was recorded:
+
+```sql
+SELECT (phase_gates->>'phase_3') IS NOT NULL AS gate_cleared
+FROM pm_sessions WHERE id = '<PLANNING_SESSION_ID>';
+```
+
+If `gate_cleared = false`, output and stop:
+```
+[BLOCKED] Phase 3 gate not recorded. The spec must be verified and approved before writing the plan.
+```
+
 Break the verified spec into ordered, executable steps.
 
 Each step must include:
@@ -202,7 +286,19 @@ Answer all four with specific findings — not "yes":
 
 Fix any issues found before proceeding.
 
-**Exit gate:** All four questions answered with concrete findings. All issues resolved. User has approved. Mark the Phase 4 task as completed.
+**Exit gate:** All four questions answered with concrete findings. All issues resolved. User has approved. Write the Phase 4 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_4', jsonb_build_object(
+        'four_questions_answered', true,
+        'approved_at', NOW()
+    )
+),
+updated_at = NOW()
+WHERE id = '<PLANNING_SESSION_ID>';
+```
 
 ### Output
 
@@ -245,6 +341,18 @@ Fill every field before marking the plan approved. `Libraries touched:` lists an
 
 Mark the Phase 5 task as in_progress.
 
+Verify the Phase 4 gate was recorded:
+
+```sql
+SELECT (phase_gates->>'phase_4') IS NOT NULL AS gate_cleared
+FROM pm_sessions WHERE id = '<PLANNING_SESSION_ID>';
+```
+
+If `gate_cleared = false`, output and stop:
+```
+[BLOCKED] Phase 4 gate not recorded. The plan's four checkpoint questions must be answered and approved before the adversarial review.
+```
+
 Switch from generation mode to review mode. Goal: break the plan, not defend it.
 
 Check:
@@ -262,7 +370,36 @@ Check:
 
 **Rollback rule:** If more than one-third of plan steps need reworking, do not patch. Restart from Phase 3.
 
-**Exit gate:** Plan is structurally sound. No broken intermediate states. Dependency order correct. All assumptions surfaced and verified. User has approved. Mark the Phase 5 task as completed.
+**Exit gate:** Plan is structurally sound. No broken intermediate states. Dependency order correct. All assumptions surfaced and verified. User has approved.
+
+Before writing the gate, explicitly state to the user:
+- Your loop-back decision: `none` OR `returned to Phase X because [reason], resolved as [resolution]`
+- Confirmation that all intermediate states between steps are consistent
+- Confirmation that the dependency order is correct
+
+Write the Phase 5 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_5', jsonb_build_object(
+        'loop_back_decision', '<none or description of what was fixed>',
+        'intermediate_states_clean', true,
+        'dependency_order_correct', true,
+        'approved_at', NOW()
+    )
+),
+updated_at = NOW()
+WHERE id = '<PLANNING_SESSION_ID>';
+```
+
+Then update the session row with the plan path:
+
+```sql
+UPDATE pm_sessions
+SET plan_path = '<plan_path>', plan_name = '<plan_name>', status = 'completed', updated_at = NOW()
+WHERE id = '<PLANNING_SESSION_ID>';
+```
 
 ---
 

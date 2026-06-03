@@ -135,7 +135,20 @@ Before any implementation code is written, define the testing approach for this 
 - Agree on test priority order — critical paths first
 - Design each component for testability: inject dependencies, return results instead of side effects, no hidden state
 
-When the test approach and interface design are agreed with the user, mark the Phase 6 task as completed.
+When the test approach and interface design are agreed with the user, write the Phase 6 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_6', jsonb_build_object(
+        'interfaces_agreed', true,
+        'test_priority_defined', true,
+        'approved_at', NOW()
+    )
+),
+updated_at = NOW()
+WHERE id = '<SESSION_ID>';
+```
 
 ---
 
@@ -143,7 +156,19 @@ When the test approach and interface design are agreed with the user, mark the P
 
 Mark the Phase 7 task as in_progress.
 
-Invoke the `superpowers:executing-plans` skill to execute the plan step-by-step. It will create a task for each plan step — these appear in the task list alongside the phase tasks, showing exactly where you are within Phase 7.
+Verify the Phase 6 gate was recorded before writing any implementation code:
+
+```sql
+SELECT (phase_gates->>'phase_6') IS NOT NULL AS gate_cleared
+FROM pm_sessions WHERE id = '<SESSION_ID>';
+```
+
+If `gate_cleared = false`, output and stop:
+```
+[BLOCKED] Phase 6 gate not recorded. Interface design and test priority must be agreed before implementation begins.
+```
+
+Invoke the `superpowers:executing-plans` skill to execute the plan step-by-step. Before invoking, count the total plan steps (checkbox items `- [ ]` in the plan file). When creating a task for each plan step, prefix each task name with `[Ph.7 · N/total]` — for example `[Ph.7 · 3/8] Add JWT validation`. This makes the phase hierarchy visible in the flat task list alongside the Phase 6–9 tasks.
 
 After completing each plan step, update Supabase via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 ```sql
@@ -160,13 +185,38 @@ WHERE id = '<SESSION_ID>';
 ```
 Mark the Phase 7 task as in_progress (not completed) and stop. Resume with `/pmcontext:resume`.
 
-When all plan steps are complete, mark the Phase 7 task as completed.
+When all plan steps are complete, write the Phase 7 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_7', jsonb_build_object(
+        'all_steps_complete', true,
+        'all_tests_passing', true,
+        'approved_at', NOW()
+    )
+),
+updated_at = NOW()
+WHERE id = '<SESSION_ID>';
+```
 
 ---
 
 ## Phase 8 — Post-Implementation Review
 
 Mark the Phase 8 task as in_progress.
+
+Verify the Phase 7 gate was recorded:
+
+```sql
+SELECT (phase_gates->>'phase_7') IS NOT NULL AS gate_cleared
+FROM pm_sessions WHERE id = '<SESSION_ID>';
+```
+
+If `gate_cleared = false`, output and stop:
+```
+[BLOCKED] Phase 7 gate not recorded. All implementation steps and tests must be complete before the review.
+```
 
 Run code review:
 - If `superpowers:requesting-code-review` is available — invoke it before any push.
@@ -178,13 +228,37 @@ Then check:
 - Did any edge cases appear that were not in the spec?
 - Does `ROADMAP.md` need updating?
 
-Report findings to the user. Flag any recommended doc updates. Mark the Phase 8 task as completed.
+Report findings to the user. Flag any recommended doc updates. Write the Phase 8 gate and mark the task as completed:
+
+```sql
+UPDATE pm_sessions
+SET phase_gates = phase_gates || jsonb_build_object(
+    'phase_8', jsonb_build_object(
+        'review_complete', true,
+        'approved_at', NOW()
+    )
+),
+updated_at = NOW()
+WHERE id = '<SESSION_ID>';
+```
 
 ---
 
 ## Phase 9 — Living Doc Update
 
 Mark the Phase 9 task as in_progress.
+
+Verify the Phase 8 gate was recorded:
+
+```sql
+SELECT (phase_gates->>'phase_8') IS NOT NULL AS gate_cleared
+FROM pm_sessions WHERE id = '<SESSION_ID>';
+```
+
+If `gate_cleared = false`, output and stop:
+```
+[BLOCKED] Phase 8 gate not recorded. The post-implementation review must be completed and reported before updating living docs.
+```
 
 Apply any doc updates flagged in Phase 8:
 - **`CLAUDE.md`** — add new patterns or constraints established this session

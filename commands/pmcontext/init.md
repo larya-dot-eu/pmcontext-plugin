@@ -85,10 +85,13 @@ CREATE TABLE IF NOT EXISTS pm_sessions (
   project               TEXT        NOT NULL,
   plan_path             TEXT,
   plan_name             TEXT,
+  session_type          TEXT        NOT NULL DEFAULT 'execution'
+                                    CHECK (session_type IN ('planning', 'execution')),
   status                TEXT        NOT NULL DEFAULT 'active'
                                     CHECK (status IN ('active', 'paused', 'completed')),
   current_step          INTEGER     DEFAULT 1,
   total_steps           INTEGER,
+  phase_gates           JSONB       NOT NULL DEFAULT '{}',
   started_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   closed_at             TIMESTAMPTZ,
