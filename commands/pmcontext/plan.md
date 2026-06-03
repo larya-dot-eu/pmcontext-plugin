@@ -322,20 +322,50 @@ If `gate_cleared = false`, output and stop:
 [BLOCKED] Phase 3 gate not recorded. The spec must be verified and approved before writing the plan.
 ```
 
+**Codebase Sync:**
+
+Before writing any plan step, read every file listed in the spec's `## Interfaces` `Before:` blocks to confirm their current state. Also read any file identified in Phase 3 Step 1 that was not in the spec. Extract all third-party import statements from each file. Write a sync table into the plan file, placed after the plan header block (Goal / Architecture / Tech Stack / `---`) and before `## Task 1`:
+
+```markdown
+## Codebase Sync — YYYY-MM-DD
+
+| File | Lines | Key symbols verified | Third-party imports |
+|---|---|---|---|
+| `path/to/file.ts` | 312 | `functionName(param: Type): ReturnType` | `react-query`, `zod` |
+```
+
+After building the sync table:
+1. Merge all third-party imports found into `Libraries touched:` in the Session Launch section — auto-populating or extending the existing value
+2. For each library now in `Libraries touched:`, take Path A (fetch context7) or Path B (explicit `[KNOWN]` self-certification) — same rules as Phase 3
+3. Output `[AUTO] Libraries touched updated from imports: [list]` if new libraries were added
+
+**Break the spec into steps:**
+
 Break the verified spec into ordered, executable steps.
 
 Each step must include:
 - What code changes or actions are required
 - The exit state after this step — is the codebase consistent or broken between steps?
-- How this step will be verified
+- A **Verify:** block — required for every code-modifying step:
+
+```markdown
+**Verify:**
+Run: `[exact command]`
+Expected: `[exact output line or pattern — not "tests pass"]`
+If instead: `[what failure looks like and what to check first]`
+```
+
+Every symbol referenced in a code snippet must appear in the codebase sync table above. If you write a function name or type that is not in the sync table, re-read the file to verify it exists before including it.
 
 ### Transition Checkpoint
 
-Answer all four with specific findings — not "yes":
+Answer all six with specific findings — not "yes":
 1. Is verification built in at each step, not just at the end?
 2. Are tasks and steps grouped by what is independently vs. dependently testable?
 3. Did you extract everything relevant — constraints, limitations, non-obvious edge cases?
 4. Are there external dependencies the plan assumes exist but does not verify first?
+5. Does the codebase sync table cover every file the plan touches?
+6. Does every code-modifying step have a `Verify:` block with exact expected output (not "tests pass")?
 
 Fix any issues found before proceeding.
 
@@ -346,6 +376,8 @@ UPDATE pm_sessions
 SET phase_gates = phase_gates || jsonb_build_object(
     'phase_4', jsonb_build_object(
         'four_questions_answered', true,
+        'codebase_sync_complete', true,
+        'all_steps_verified', true,
         'approved_at', NOW()
     )
 ),
@@ -387,9 +419,10 @@ Key design decisions:
 Gotchas:
 Start here:
 End here:
+Mandatory context:
 ```
 
-Fill every field before marking the plan approved. `Tier:` must be `standard` or `full` — `/pmcontext:execute` reads this to calibrate Phase 8 depth. `Libraries touched:` lists any external libraries or APIs — write `—` if none.
+Fill every field before marking the plan approved. `Tier:` must be `standard` or `full` — `/pmcontext:execute` reads this to calibrate Phase 8 depth. `Libraries touched:` lists any external libraries or APIs, including those auto-detected from the codebase sync import scan — write `—` if none. `Mandatory context:` lists the spec file path and any type definition files read during the codebase sync that are not already in "Files the plan touches" — write `—` if none beyond the spec.
 
 ---
 
