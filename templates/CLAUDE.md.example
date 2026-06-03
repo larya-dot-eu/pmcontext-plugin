@@ -28,6 +28,8 @@ Pick the right tier before starting — using more process than the task needs w
 - 3–10 files, mostly known → Standard
 - Many files, novel approach, or touches core infrastructure → Full
 
+**Required:** Standard and Full tiers require the [context7 MCP](https://github.com/upstash/context7) when any plan touches external libraries. Claude will warn if it is missing.
+
 ### Phase Gates
 
 Phase gates apply to **Standard and Full tiers only**. Quick tier has no phases — it goes straight to implementation after a blast-radius check.
@@ -36,10 +38,10 @@ Each phase ends with an explicit exit gate. Claude will stop and ask for your ap
 
 | Phase | What Claude reports | Your job |
 |-------|--------------------|----|
-| Prerequisites | Summary of project context loaded | Confirm it's accurate or correct it |
+| Prerequisites | `[CONTEXT LOADED]` banner listing which files were found (CLAUDE.md, CONTEXT.md, ROADMAP.md) | Confirm it's accurate or correct it |
 | Phase 1 — Context Priming | Current architecture, constraints, prior decisions | Confirm understanding is correct |
 | Phase 2 — Exploration | Answers to: why, constraints, what's different | Confirm all three are clearly answered |
-| Phase 3 — Spec Writing | Skeleton-based spec (interfaces, edge cases, assumptions) + self-review checklist | Approve spec; reject if any field is blank, unverified, or a library type lacks Path A/B annotation |
+| Phase 3 — Spec Writing | Skeleton-based spec (interfaces, edge cases, assumptions) + self-review checklist | Approve spec; reject if any field is blank, unverified, or a library type's `After:` block lacks either `[CONTEXT7] docs fetched for <lib>` or `[KNOWN] <lib> — <reason>` |
 | Phase 4 — Plan Writing | Plan with codebase sync table + Verify blocks, answers to 6 checkpoint questions | Approve plan; each checkpoint must have specific findings, not "yes" |
 | Phase 5 — Adversarial Review | Loop-back decision + intermediate state trace | Approve only when plan is structurally sound — this gate protects all of Phase 7 |
 | Phase 6 — TDD Planning | Agreed interfaces + prioritised test list | Confirm before any code is written |
