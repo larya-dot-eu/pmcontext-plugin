@@ -49,9 +49,11 @@ Safe to re-run — uses `CREATE TABLE IF NOT EXISTS`.
 |---------|-------------|
 | `/pmcontext:init` | One-time setup — connects Supabase, creates tables, writes `~/.pmcontext` |
 | `/pmcontext:start` | Start of session — scaffolds missing files, loads project context, surfaces decisions/risks |
-| `/pmcontext:plan` | PM-Claude planning workflow — 5 phases from exploration to adversarial review, produces a plan file |
-| `/pmcontext:execute <plan>` | Executes a plan file end-to-end with TDD, task tracking, and code review |
-| `/pmcontext:resume` | Continues the last paused or active session with no arguments |
+| `/pmcontext:quick <description>` | Quick tier — blast-radius check then implement directly, no planning phases |
+| `/pmcontext:plan` | Standard tier — all 9 phases, produces a plan file ready for `/pmcontext:execute` |
+| `/pmcontext:plan --full` | Full tier — same as above with HTML companions and full adversarial review |
+| `/pmcontext:execute <plan>` | Executes a plan file end-to-end with TDD, phase gate enforcement, and task tracking |
+| `/pmcontext:resume` | Continues the last paused or active session from where it left off |
 | `/pmcontext:close` | End of session — writes receipt to Supabase, updates project state |
 | `/pmcontext:status` | Quick dashboard — decisions, risks, checkpoint, active session |
 
@@ -64,10 +66,15 @@ One Supabase project stores state for all your coding projects. The `project` co
 ## Typical Workflow
 
 ```
-/pmcontext:start          → orient the session, scaffold missing files
-/pmcontext:plan           → 5-phase planning workflow → produces a plan file
-/pmcontext:execute <plan> → execute the plan with TDD and task tracking
-/pmcontext:close          → write session receipt to Supabase
+/pmcontext:start              → orient the session, scaffold missing files
+
+# Pick a tier based on task size:
+/pmcontext:quick <description>  → small change: implement directly after blast-radius check
+/pmcontext:plan                 → standard: all 9 phases, produces a plan file
+/pmcontext:plan --full          → full: same + HTML companions + full adversarial review
+
+/pmcontext:execute <plan>     → execute the plan with TDD and phase gate enforcement
+/pmcontext:close              → write session receipt to Supabase
 ```
 
 ## Plan Files
@@ -77,6 +84,7 @@ Plans are created by `/pmcontext:plan` and saved to `docs/superpowers/plans/` (g
 ```markdown
 ## Session Launch
 
+Tier:
 What this builds:
 Codebase state going in:
 Files the plan touches:
