@@ -28,7 +28,7 @@ Example: /pmcontext:quick fix the null check in auth/validate.ts line 42
 ```
 and stop.
 
-Detect the current project name: run `git rev-parse --show-toplevel` via Bash tool, take basename.
+Detect the current project name: run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool. If not in a git repo, use `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'`.
 
 ## Step 1: Load Context
 

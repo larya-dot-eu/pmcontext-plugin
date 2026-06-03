@@ -15,9 +15,9 @@ Read the Supabase project ID:
 - Use this value as `<PROJECT_ID>` for the `project_id` parameter in all MCP tool calls below.
 
 Detect the current project name:
-- Run `git rev-parse --show-toplevel` via Bash tool, then take the basename.
+- Run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool.
   Example: `/home/chris/GitHubReps/linkedin` → `linkedin`
-- If not in a git repo, use the basename of the current working directory.
+- If not in a git repo, run `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'` instead.
 - Use this value as `<project>` in SQL WHERE clauses below.
 
 ## Prerequisite Check

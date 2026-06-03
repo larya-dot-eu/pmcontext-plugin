@@ -102,7 +102,7 @@ Context will be limited. Proceeding with plan execution.
 
 ## Step 5: Create Session Row
 
-Detect the current project name: run `git rev-parse --show-toplevel` via Bash tool, take basename.
+Detect the current project name: run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool. If not in a git repo, use `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'`.
 
 Count the total plan steps (checkbox items `- [ ]` in the plan file).
 

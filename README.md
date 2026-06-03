@@ -5,7 +5,8 @@ Claude Code plugin for PM-Claude session management. Tracks open decisions, acti
 ## Requirements
 
 - [Claude Code](https://claude.ai/code)
-- Supabase MCP configured in Claude Code
+- A free [Supabase](https://supabase.com) account with one project
+- Supabase MCP configured in Claude Code (see setup below)
 
 ## Recommended Setup
 
@@ -15,6 +16,28 @@ For the best pmcontext experience, especially for remote or multi-device develop
 - **Remote access**: [Tailscale](https://tailscale.com) or [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) — lets you reach your dev machine from anywhere and review HTML spec/plan files in a browser on another device
 - **Version control**: GitHub with Claude Code for seamless git integration
 - **Companion plugins**: [`superpowers`](https://github.com/anthropics/claude-plugins-community), [`code-review`](https://github.com/anthropics/claude-plugins-community), [`context7`](https://github.com/upstash/context7)
+
+## Supabase MCP Setup (one-time)
+
+pmcontext uses Supabase to track sessions across projects and machines. You need a free Supabase account and the Supabase MCP configured in Claude Code.
+
+**1. Create a Supabase project**
+
+Sign up at [supabase.com](https://supabase.com) (free tier is enough). Create a new project and note the project name — you'll select it during `/pmcontext:init`.
+
+**2. Add Supabase MCP to Claude Code**
+
+In your Claude Code MCP settings (`~/.claude/settings.json` or via `/config`), add the Supabase MCP server. The easiest way is through the Claude Code MCP marketplace:
+
+```
+/mcp add supabase
+```
+
+Follow the prompts to authenticate your Supabase account. This is a one-time step per machine.
+
+**What gets stored:** `pm_sessions` records files changed, commands run, and manual checks per session. `pm_state` tracks open decisions and active risks per project. All data lives in your own Supabase project — you control access.
+
+---
 
 ## Install
 
@@ -182,4 +205,6 @@ End here:
 claude plugin validate
 ```
 
-Then open a PR at https://github.com/anthropics/claude-plugins-community
+Then submit via the in-app form:
+- Claude.ai: `claude.ai/settings/plugins/submit`
+- Console: `platform.claude.com/plugins/submit`
