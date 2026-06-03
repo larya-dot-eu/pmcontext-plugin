@@ -4,6 +4,15 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.0.7] — 2026-06-03
+
+### Fixed
+- `superpowers` link in README corrected to `github.com/obra/superpowers`.
+- `context7` and `superpowers` moved from Recommended Setup to Requirements in README — both are required dependencies, not optional recommendations.
+- `code-review` correctly described as a built-in Claude Code command (`/code-review`) rather than a companion plugin requiring separate installation.
+
+---
+
 ## [1.0.6] — 2026-06-03
 
 ### Fixed
