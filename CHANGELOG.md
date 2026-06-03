@@ -4,6 +4,20 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.0.6] — 2026-06-03
+
+### Fixed
+- `execute.md` Step 3 extraction list now includes `Mandatory context:` — previously Step 2 referenced it as "already parsed in Step 3" but Step 3 never extracted it, causing a silent no-op.
+- `templates/CLAUDE.md.example` Phase 3 and Phase 4 gate descriptions updated to reflect skeleton-based spec workflow, self-review checklist, codebase sync table, Verify blocks, and 6 checkpoint questions.
+
+### Added
+- `templates/CLAUDE.md.example` now documents: `[CONTEXT LOADED]` banner in the Prerequisites gate row, context7 requirement note before the Phase Gates table, and explicit `[CONTEXT7]`/`[KNOWN]` tag examples in the Phase 3 gate row so PMs know what to look for when reviewing specs.
+- `skills/pmcontext/SKILL.md` updated: context7 dependency now covers `plan` (Phase 3 Path A, Phase 4 import scan) in addition to `execute` and `resume`; Session Launch convention documents `Mandatory context:` field; Scaffolded files section documents `spec-skeleton.md`.
+- `commands/pmcontext/init.md` template check now includes `spec-skeleton.md`.
+- `docs/` added to `.gitignore` — superpowers plans, specs, and related files stay local.
+
+---
+
 ## [1.0.5] — 2026-06-03
 
 ### Added
