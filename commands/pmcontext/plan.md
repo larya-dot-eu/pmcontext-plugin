@@ -66,7 +66,9 @@ If not ignored, append it:
 echo "docs/superpowers/" >> .gitignore
 ```
 
-## Load Project Context
+## Load Mandatory Context Set
+
+**Static tier (full — files + Supabase):**
 
 Run file checks in parallel via Bash tool:
 ```bash
@@ -76,7 +78,8 @@ test -f CONTEXT.md && echo "exists" || echo "missing"
 test -f PROJECT_BRIEF.md && echo "exists" || echo "missing"
 ```
 
-Read each file that exists:
+Read each file that exists. Missing files: warn and continue — do not block.
+
 - **`CLAUDE.md`** — architecture rules, stack conventions, coding patterns, constraints
 - **`ROADMAP.md`** — current priorities and already-decided directions
 - **`CONTEXT.md`** — Node Model (Surface vs Core nodes)
@@ -87,6 +90,16 @@ Query open decisions and active risks via `mcp__claude_ai_Supabase__execute_sql`
 SELECT open_decisions, active_risks
 FROM pm_state
 WHERE project = '<project>';
+```
+
+Output:
+```
+[CONTEXT LOADED]
+  CLAUDE.md          ✓     (or [missing])
+  ROADMAP.md         ✓     (or [missing])
+  CONTEXT.md         ✓     (or [missing])
+  PROJECT_BRIEF.md   ✓     (or [missing])
+  pm_state           ✓ (<n> open decisions, <n> active risks)    (or [no row])
 ```
 
 After loading, summarize to the user:
