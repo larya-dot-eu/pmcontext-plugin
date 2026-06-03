@@ -7,7 +7,7 @@ A Claude Code plugin that transforms how you work with Claude — you become the
 - [Claude Code](https://claude.ai/code)
 - A free [Supabase](https://supabase.com) account with one project
 - Supabase MCP configured in Claude Code (see setup below)
-- [`superpowers`](https://github.com/anthropics/claude-plugins-community) plugin — required for the planning and execution workflow (phase gates, TDD, code review)
+- [`superpowers`](https://github.com/obra/superpowers) plugin — required for the planning and execution workflow (phase gates, TDD, code review)
 - [`context7`](https://github.com/upstash/context7) MCP — required for Standard and Full tiers when any plan touches external libraries (Phase 3 interface type docs, Phase 4 import scan)
 
 ## Recommended Setup
