@@ -86,7 +86,7 @@ If missing and `<PLUGIN_DIR>` is blank:
 
 ## Load Context
 
-**Step 1 — Read CONTEXT.md:** Read it if present. It defines the PM–Claude protocol and codebase tour instructions.
+**Step 1 — Read CONTEXT.md:** Read it if present. It defines the Node Model (Surface vs Core nodes).
 
 **Step 2 — Read PROJECT_BRIEF.md:** Read it if present.
 
@@ -116,11 +116,39 @@ Handle any missing files before presenting the session output. Present both prom
 **If `<tour_needed>` is true:**
 ```
 No PROJECT_BRIEF.md found. Run the full codebase tour now?
-This produces a Surface Node Inventory, Core Node Map, Test Strategy,
+Produces: Surface Node Inventory, Core Node Map, Test Strategy,
 End-to-End Checkpoints, and Security Surface Audit — saved to PROJECT_BRIEF.md.
 (yes / no)
 ```
-If yes: follow the "What I Need From You: The Codebase Tour" section from CONTEXT.md. Write all five deliverables to `PROJECT_BRIEF.md`. Output: `✓ PROJECT_BRIEF.md created`
+If yes, read the codebase and produce all five deliverables, then write to `PROJECT_BRIEF.md`:
+
+**1. Surface Node Inventory** — every user-facing feature or output:
+- What it does (1 sentence, plain language — no code terms)
+- How the PM can verify it: input → expected output, human-readable
+- Stability: `stable` / `fragile` / `untested`
+
+**2. Core Node Map** — key technical layers beneath the Surface nodes:
+- What it does
+- Which Surface nodes depend on it
+- Known fragility or risks
+
+**3. Test Strategy** — one test per Surface node at three levels (happy path, edge case, error path):
+- `GIVEN` — input or starting state
+- `WHEN` — the trigger
+- `THEN` — observable result (what the PM sees, not internal behavior)
+- `PASS if` / `FAIL if` — binary, unambiguous
+- Behavior-focused, not implementation-focused
+
+**4. End-to-End Checkpoints** — 3–5 tests covering the highest-risk Surface nodes:
+- Single copy-pasteable command
+- Output is a clear PASS/FAIL readable in 30 seconds
+- Not tied to any specific internal implementation detail
+
+**5. Security Surface Audit** — every point where external input is accepted, secrets are handled, or access control is decided:
+- Risk rating: 🟢 Low / 🟡 Medium / 🔴 High
+- Plain-language explanation of the actual risk to the PM, not what the code does
+
+Output: `✓ PROJECT_BRIEF.md created`
 
 **If `<roadmap_needed>` is true:**
 ```
