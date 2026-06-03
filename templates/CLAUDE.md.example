@@ -30,6 +30,8 @@ Pick the right tier before starting — using more process than the task needs w
 
 ### Phase Gates
 
+Phase gates apply to **Standard and Full tiers only**. Quick tier has no phases — it goes straight to implementation after a blast-radius check.
+
 Each phase ends with an explicit exit gate. Claude will stop and ask for your approval before proceeding. Your role at each gate:
 
 | Phase | What Claude reports | Your job |
