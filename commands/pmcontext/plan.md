@@ -79,7 +79,7 @@ test -f PROJECT_BRIEF.md && echo "exists" || echo "missing"
 Read each file that exists:
 - **`CLAUDE.md`** — architecture rules, stack conventions, coding patterns, constraints
 - **`ROADMAP.md`** — current priorities and already-decided directions
-- **`CONTEXT.md`** — PM–Claude protocol and Node Model
+- **`CONTEXT.md`** — Node Model (Surface vs Core nodes)
 - **`PROJECT_BRIEF.md`** — Surface Node Inventory and Core Node Map
 
 Query open decisions and active risks via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:

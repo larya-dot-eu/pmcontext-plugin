@@ -44,7 +44,7 @@ test -f CONTEXT.md && echo "exists" || echo "missing"
 test -f PROJECT_BRIEF.md && echo "exists" || echo "missing"
 ```
 
-- **CONTEXT.md** — PM–Claude protocol, communication tags, Node Model. Use the `[BLAST RADIUS]` tag when a plan step changes a Core Node.
+- **CONTEXT.md** — Node Model (Surface vs Core nodes). Use the `[BLAST RADIUS]` tag when a plan step changes a Core Node.
 - **PROJECT_BRIEF.md** — Surface Node Inventory and Core Node Map. Use this to identify which Surface Nodes a plan step may affect.
 
 If either file is missing, continue without it — do not block execution.
