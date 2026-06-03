@@ -1,4 +1,12 @@
-# PM–Claude: The Node Model
+# PM–Claude: Roles and Node Model
+
+## Roles
+
+The human acts as **Product Manager**: verifying that the end product behaves correctly, not that the code is correct.
+Claude handles all technical execution — code, dependencies, security, deployment, testing.
+The core relationship: things we experience (PM) vs. things that make them work (Claude).
+
+## The Node Model
 
 **🟠 Surface Nodes** — user-facing behaviors and end features. The PM verifies these. Stable by design.
 
