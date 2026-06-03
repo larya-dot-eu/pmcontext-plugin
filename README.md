@@ -98,7 +98,7 @@ The plugin divides responsibility clearly: you verify that the product behaves c
 /pmcontext:start
 ```
 
-Always run this first. It loads your project context (CLAUDE.md, ROADMAP.md, PROJECT_BRIEF.md), surfaces any open decisions or active risks from previous sessions, and scaffolds missing files if it's the first time in this project. It also tells you if there's a paused session waiting to be resumed.
+Always run this first. It reads your mandatory context set (CLAUDE.md, CONTEXT.md, ROADMAP.md) and emits a `[CONTEXT LOADED]` banner confirming what was found, surfaces any open decisions or active risks from previous sessions, and scaffolds missing files if it's the first time in this project. It also tells you if there's a paused session waiting to be resumed.
 
 ---
 
@@ -126,6 +126,10 @@ Use when: new endpoint, new component, refactoring a module, anything touching 3
 ```
 
 Claude runs all 9 phases — context priming, exploration, spec, plan, adversarial review, TDD, implementation, review, living doc update. Each phase ends with an explicit gate: Claude stops, reports findings, and waits for your approval before proceeding. You cannot skip a gate. Outputs are markdown only.
+
+Phase 3 (spec) uses a structured skeleton — Claude identifies affected files and reads them before writing a word, then fills every field (interfaces with exact Before/After signatures, edge cases table, out of scope, assumptions). A self-review checklist runs before the exit gate.
+
+Phase 4 (plan) opens with a codebase sync table mapping every file the plan touches to its current line count and key symbols. Every code-modifying step includes a `Verify:` block with an exact command and expected output — not "tests pass".
 
 **Full — for architectural changes, new subsystems, or anything risky**
 
@@ -195,9 +199,10 @@ Key design decisions:
 Gotchas:
 Start here:
 End here:
+Mandatory context:
 ```
 
-`/pmcontext:execute` reads this section automatically — no briefing prompt needed.
+`/pmcontext:execute` reads this section automatically — no briefing prompt needed. `Mandatory context:` lists the spec file path and any additional type definition files to load at execution time — write `—` if none beyond the static tier.
 
 ## Submitting to the Community Marketplace
 
