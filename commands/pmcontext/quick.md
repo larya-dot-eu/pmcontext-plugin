@@ -30,11 +30,26 @@ and stop.
 
 Detect the current project name: run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool. If not in a git repo, use `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'`.
 
-## Step 1: Load Context
+## Step 1: Load Mandatory Context Set
 
-Read `CLAUDE.md` if it exists. Identify the files most likely involved based on $ARGUMENTS and read them.
+Run file checks in parallel via Bash tool:
+```bash
+test -f CLAUDE.md && echo "exists" || echo "missing"
+test -f CONTEXT.md && echo "exists" || echo "missing"
+test -f ROADMAP.md && echo "exists" || echo "missing"
+```
 
-Do not read unrelated files — load only what is needed to understand the change.
+Read each file that exists. Missing files: warn and continue — do not block.
+
+Output:
+```
+[CONTEXT LOADED]
+  CLAUDE.md     ✓     (or [missing])
+  CONTEXT.md    ✓     (or [missing])
+  ROADMAP.md    ✓     (or [missing])
+```
+
+Then identify the files most likely involved based on $ARGUMENTS and read them. Do not read unrelated files — load only what is needed to understand the change.
 
 ## Step 2: Blast-Radius Check
 
