@@ -87,6 +87,8 @@ CREATE TABLE IF NOT EXISTS pm_sessions (
   plan_name             TEXT,
   session_type          TEXT        NOT NULL DEFAULT 'execution'
                                     CHECK (session_type IN ('planning', 'execution')),
+  tier                  TEXT        NOT NULL DEFAULT 'standard'
+                                    CHECK (tier IN ('quick', 'standard', 'full')),
   status                TEXT        NOT NULL DEFAULT 'active'
                                     CHECK (status IN ('active', 'paused', 'completed')),
   current_step          INTEGER     DEFAULT 1,

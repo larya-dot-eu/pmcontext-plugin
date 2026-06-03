@@ -19,6 +19,17 @@ If the file is missing or `SUPABASE_PROJECT_ID` is blank, output and stop:
 Run /pmcontext:init to complete setup.
 ```
 
+Detect tier from $ARGUMENTS:
+- If $ARGUMENTS contains `--full` → `<TIER>` = `full`
+- Otherwise → `<TIER>` = `standard`
+
+Output at the start of the session:
+```
+[TIER] Running /pmcontext:plan in <TIER> tier.
+  standard — all phases, markdown outputs, abbreviated adversarial review
+  full     — all phases, HTML companions, full adversarial review with loop-back analysis
+```
+
 Detect the current project name:
 - Run `git rev-parse --show-toplevel` via Bash tool, then take the basename.
 - If not in a git repo, use the basename of the current working directory.
@@ -104,8 +115,8 @@ Note each task ID. Mark the Prerequisites task as completed now.
 Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 
 ```sql
-INSERT INTO pm_sessions (project, session_type, status, started_at, updated_at)
-VALUES ('<project>', 'planning', 'active', NOW(), NOW())
+INSERT INTO pm_sessions (project, session_type, tier, status, started_at, updated_at)
+VALUES ('<project>', 'planning', '<TIER>', 'active', NOW(), NOW())
 RETURNING id;
 ```
 
@@ -237,12 +248,12 @@ WHERE id = '<PLANNING_SESSION_ID>';
 
 ### Output
 
-Save both to `docs/superpowers/specs/`:
+Save to `docs/superpowers/specs/`:
 
-**1. Markdown spec:**
+**1. Markdown spec (all tiers):**
 `YYYY-MM-DD-[feature-name]-design.md` — structured prose covering behavior, interfaces, edge cases, and assumptions.
 
-**2. HTML visual companion:**
+**2. HTML visual companion (full tier only):**
 `spec-[feature-name].html` — self-contained styled file. Must include:
 - Sticky sidebar navigation linking to each section
 - Color-coded sections: behavior (blue), interfaces (green), edge cases (amber), assumptions (red)
@@ -250,6 +261,8 @@ Save both to `docs/superpowers/specs/`:
 - A checklist of exit gate items the user can tick off while reviewing
 
 To review: `python3 -m http.server 8090` from the project root, then open `http://localhost:8090/docs/superpowers/specs/spec-[feature-name].html`
+
+Skip the HTML companion if `<TIER>` = `standard`.
 
 ---
 
@@ -304,10 +317,10 @@ WHERE id = '<PLANNING_SESSION_ID>';
 
 Save to `docs/superpowers/plans/`:
 
-**1. Markdown plan:**
+**1. Markdown plan (all tiers):**
 `YYYY-MM-DD-[feature-name]-plan.md` — ordered steps with exit states and verification methods.
 
-**2. HTML visual companion:**
+**2. HTML visual companion (full tier only):**
 `plan-[feature-name].html` — self-contained styled file. Must include:
 - Sticky sidebar navigation with phase links
 - Color-coded phases: exploration (purple), spec (blue), plan (green), review (red), TDD (orange), implementation (teal)
@@ -318,11 +331,14 @@ Save to `docs/superpowers/plans/`:
 
 To review: `python3 -m http.server 8090` from the project root, then open `http://localhost:8090/docs/superpowers/plans/plan-[feature-name].html`
 
+Skip the HTML companion if `<TIER>` = `standard`.
+
 **3. Session Launch section (required — append to the Markdown plan file):**
 
 ```markdown
 ## Session Launch
 
+Tier:
 What this builds:
 Codebase state going in:
 Files the plan touches:
@@ -333,7 +349,7 @@ Start here:
 End here:
 ```
 
-Fill every field before marking the plan approved. `Libraries touched:` lists any external libraries or APIs — write `—` if none. This section is what `/pmcontext:execute` reads at the start of each execution session.
+Fill every field before marking the plan approved. `Tier:` must be `standard` or `full` — `/pmcontext:execute` reads this to calibrate Phase 8 depth. `Libraries touched:` lists any external libraries or APIs — write `—` if none.
 
 ---
 
@@ -353,14 +369,30 @@ If `gate_cleared = false`, output and stop:
 [BLOCKED] Phase 4 gate not recorded. The plan's four checkpoint questions must be answered and approved before the adversarial review.
 ```
 
-Switch from generation mode to review mode. Goal: break the plan, not defend it.
+Switch from generation mode to review mode. Goal: find structural problems, not defend the plan.
+
+---
+
+### Standard tier — structural check
+
+Answer both questions with specific findings:
+
+1. **Intermediate states:** After each step, is the codebase consistent or broken? Walk through each step briefly.
+2. **Dependency order:** Can each step run given only what precedes it? Identify any step that assumes something not yet built.
+
+If either check fails → return to Phase 4 and fix, then re-check.
+If both pass → write the gate and proceed.
+
+---
+
+### Full tier — adversarial review
 
 Check:
 - Trace each step's intermediate state — after this step, is the codebase consistent or broken?
 - Draw the actual dependency graph — what must exist before each step can run?
 - What did you observe in the codebase that is not yet documented in the plan?
 
-### Loop-Back Decision
+**Loop-Back Decision:**
 
 | Finding | Action |
 |---|---|
@@ -370,7 +402,9 @@ Check:
 
 **Rollback rule:** If more than one-third of plan steps need reworking, do not patch. Restart from Phase 3.
 
-**Exit gate:** Plan is structurally sound. No broken intermediate states. Dependency order correct. All assumptions surfaced and verified. User has approved.
+---
+
+**Exit gate (both tiers):** Plan is structurally sound. No broken intermediate states. Dependency order correct. All assumptions surfaced and verified. User has approved.
 
 Before writing the gate, explicitly state to the user:
 - Your loop-back decision: `none` OR `returned to Phase X because [reason], resolved as [resolution]`

@@ -52,6 +52,7 @@ If either file is missing, continue without it — do not block execution.
 ## Step 3: Parse the Session Launch Section
 
 Find the `## Session Launch` section at the end of the plan file. Extract:
+- **Tier** — `standard` or `full`. If missing or blank, default to `standard`. Set as `<TIER>`.
 - **What this builds** — one sentence summary
 - **Codebase state going in** — test count, branch, relevant state
 - **Files the plan touches** — list of files
@@ -107,8 +108,8 @@ Count the total plan steps (checkbox items `- [ ]` in the plan file).
 
 Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 ```sql
-INSERT INTO pm_sessions (project, plan_path, plan_name, status, current_step, total_steps, started_at, updated_at)
-VALUES ('<project>', '<plan_path>', '<plan_name>', 'active', 1, <total_steps>, NOW(), NOW())
+INSERT INTO pm_sessions (project, plan_path, plan_name, session_type, tier, status, current_step, total_steps, started_at, updated_at)
+VALUES ('<project>', '<plan_path>', '<plan_name>', 'execution', '<TIER>', 'active', 1, <total_steps>, NOW(), NOW())
 RETURNING id;
 ```
 Note the returned `id` as `<SESSION_ID>`.
@@ -218,11 +219,13 @@ If `gate_cleared = false`, output and stop:
 [BLOCKED] Phase 7 gate not recorded. All implementation steps and tests must be complete before the review.
 ```
 
-Run code review:
-- If `superpowers:requesting-code-review` is available — invoke it before any push.
+**Full tier only:** invoke an external code review before checking the items below.
+- If `superpowers:requesting-code-review` is available — invoke it.
 - Otherwise invoke the `code-review` skill if available.
 
-Then check:
+**Standard tier:** skip the external code review — internal review only.
+
+Check:
 - Did the implementation match the plan? If not, document what changed and why.
 - Did any new constraints or patterns surface that should be added to `CLAUDE.md`?
 - Did any edge cases appear that were not in the spec?

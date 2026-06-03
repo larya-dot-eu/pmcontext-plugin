@@ -13,13 +13,20 @@ Do not end a session without running `/pmcontext:close`. If no code changes occu
 
 ### Planning & Execution Workflow
 
-Run these in order for any non-trivial feature or change:
+Pick the right tier before starting — using more process than the task needs wastes time:
 
-| Command | When |
-|---------|------|
-| `/pmcontext:plan` | Before any implementation — runs Phases 1–5: context priming, exploration, spec, plan, adversarial review |
-| `/pmcontext:execute <plan-file>` | After the plan is approved — runs Phases 6–9: TDD, implementation, review, living doc update |
-| `/pmcontext:resume` | Continue a paused session |
+| Command | Tier | When |
+|---------|------|------|
+| `/pmcontext:quick <description>` | Quick | Small, obvious change: bug fix, rename, config tweak, adding a test. No planning phases — blast-radius check then implement directly. |
+| `/pmcontext:plan` | Standard | New functionality that follows existing patterns. All 9 phases, markdown outputs, abbreviated adversarial review. |
+| `/pmcontext:plan --full` | Full | Architectural change, new subsystem, novel approach, or anything risky. All 9 phases with HTML companions and full adversarial review with loop-back analysis. |
+| `/pmcontext:execute <plan-file>` | — | Run after `/pmcontext:plan`. Reads the plan file to determine tier. |
+| `/pmcontext:resume` | — | Continue a paused session. |
+
+**Not sure which tier?** Ask: how many files will change, and is the approach already established in this codebase?
+- 1–2 files, known pattern → Quick
+- 3–10 files, mostly known → Standard
+- Many files, novel approach, or touches core infrastructure → Full
 
 ### Phase Gates
 
