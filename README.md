@@ -1,6 +1,6 @@
 # pmcontext
 
-Claude Code plugin for PM-Claude session management. Tracks open decisions, active risks, session receipts, and plan execution state in Supabase — across any project, on any machine.
+A Claude Code plugin that transforms how you work with Claude — you become the Product Manager, Claude becomes your implementation engineer. Instead of prompting and hoping, you work through structured specs and plans, with explicit phase gates, blast-radius checks, and security reviews built into every session. Tracks open decisions, active risks, session receipts, and plan execution state in Supabase — across any project, on any machine.
 
 ## Requirements
 
@@ -88,7 +88,7 @@ One Supabase project stores state for all your coding projects. The `project` co
 
 ## Typical Workflow
 
-The plugin treats Claude as your implementation engineer and you as the Product Manager. You verify that the product behaves correctly — not that the code is correct. Every session is bookended by `start` and `close`. Everything in between depends on how big the task is.
+The plugin divides responsibility clearly: you verify that the product behaves correctly — that the right thing was built; Claude owns that the code is correct, clean, safe, and functional. Every session is bookended by `start` and `close`. Everything in between depends on how big the task is.
 
 ---
 
