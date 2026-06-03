@@ -36,12 +36,14 @@ Wait for user selection. Use the chosen project's `id` as `<PROJECT_ID>` and its
 
 First, locate the pmcontext plugin installation directory via Bash tool:
 ```bash
-find ~/.claude -name "plugin.json" 2>/dev/null | while IFS= read -r f; do
+result=""
+while IFS= read -r f; do
   if grep -q '"name": "pmcontext"' "$f" 2>/dev/null; then
-    dirname "$(dirname "$f")"
+    result=$(dirname "$(dirname "$f")")
     break
   fi
-done
+done < <(find ~/.claude -name "plugin.json" 2>/dev/null)
+echo "$result"
 ```
 
 Note the output as `<PLUGIN_DIR>`. If the output is empty, output a warning and set `<PLUGIN_DIR>` to blank:
