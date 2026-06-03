@@ -86,11 +86,21 @@ If missing and `<PLUGIN_DIR>` is blank:
 
 ## Load Context
 
+**Step 0 — Read CLAUDE.md:** Run `test -f CLAUDE.md && echo "exists" || echo "missing"` via Bash. Read it if present — architecture rules and conventions.
+
 **Step 1 — Read CONTEXT.md:** Read it if present. It defines the Node Model (Surface vs Core nodes).
 
 **Step 2 — Read PROJECT_BRIEF.md:** Read it if present.
 
 **Step 3 — Read ROADMAP.md:** Read it if present.
+
+Output confirmation banner after Steps 0–3 complete:
+```
+[CONTEXT LOADED]
+  CLAUDE.md     ✓     (or [missing])
+  CONTEXT.md    ✓     (or [missing])
+  ROADMAP.md    ✓     (or [missing])
+```
 
 **Step 4 — Query pm_state** via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 ```sql
