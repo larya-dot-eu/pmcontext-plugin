@@ -17,7 +17,7 @@ For the best pmcontext experience, especially for remote or multi-device develop
 - **OS**: Ubuntu (Linux) — most reliable environment for Claude Code and MCP tooling
 - **Remote access**: [Tailscale](https://tailscale.com) or [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) — lets you reach your dev machine from anywhere and review HTML spec/plan files in a browser on another device
 - **Version control**: GitHub with Claude Code for seamless git integration
-- **Companion plugin**: [`code-review`](https://github.com/anthropics/claude-plugins-community) — used during Phase 8 post-implementation review
+- **`/code-review` command** — built into Claude Code, used during Phase 8 post-implementation review to check the diff for correctness bugs and regressions
 
 ## Supabase MCP Setup (one-time)
 
