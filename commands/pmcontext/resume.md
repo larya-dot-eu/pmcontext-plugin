@@ -86,18 +86,38 @@ Run /pmcontext:execute <new-plan-path> to start a new session.
 ```
 Stop.
 
-## Load Project Context
+## Load Mandatory Context Set
 
-Read the following files from the project root if they exist (run checks in parallel via Bash tool):
+**Static tier (files only):**
+
+Run file checks in parallel via Bash tool:
 ```bash
+test -f CLAUDE.md && echo "exists" || echo "missing"
 test -f CONTEXT.md && echo "exists" || echo "missing"
+test -f ROADMAP.md && echo "exists" || echo "missing"
 test -f PROJECT_BRIEF.md && echo "exists" || echo "missing"
+```
+
+Read each file that exists. Missing files: warn and continue — do not block resumption.
+
+**Feature-specific tier:**
+
+Read the plan file's `## Session Launch` section (already read above). Extract the `Mandatory context:` field. If non-empty, read each listed file. If the field is absent or blank (plan written before these changes):
+```
+[WARN] No Mandatory context: field found — loading static tier only.
+```
+
+Output:
+```
+[CONTEXT LOADED]
+  CLAUDE.md          ✓     (or [missing])
+  CONTEXT.md         ✓     (or [missing])
+  ROADMAP.md         ✓     (or [missing])
+  mandatory context: ✓ <n> files    (or [none defined])
 ```
 
 - **CONTEXT.md** — Node Model (Surface vs Core nodes). Use the `[BLAST RADIUS]` tag when a plan step changes a Core Node.
 - **PROJECT_BRIEF.md** — Surface Node Inventory and Core Node Map. Use this to identify which Surface Nodes a plan step may affect.
-
-If either file is missing, continue without it — do not block resumption.
 
 ## Phase 7 — Resume Implementation
 
