@@ -70,15 +70,17 @@ All commands require:
 - **Supabase MCP** — session and state persistence
 - **`superpowers` skills** — `executing-plans`, `test-driven-development`, `writing-plans`, `brainstorming`, `requesting-code-review`, `verification-before-completion`, `using-git-worktrees`, `finishing-a-development-branch`
 
-`/pmcontext:execute` and `/pmcontext:resume` additionally require:
-- **context7 MCP** — when the plan's `Libraries touched` field is non-empty
+`/pmcontext:plan`, `/pmcontext:execute`, and `/pmcontext:resume` additionally require:
+- **context7 MCP** — `plan` uses it in Phase 3 (Path A: fetch live docs for third-party interface types) and Phase 4 (codebase sync import scan); `execute` and `resume` use it as a confirmation pass when `Libraries touched` is non-empty
 
 ## Plan file convention
 
 Plans live in `docs/superpowers/plans/` (gitignored). Every plan must end with
-a `## Session Launch` section that includes `Tier:`, `Libraries touched:`, and
-other execution metadata. `/pmcontext:execute` reads `Tier:` to calibrate Phase 8
-depth and `Libraries touched` to decide whether context7 is needed.
+a `## Session Launch` section that includes `Tier:`, `Libraries touched:`,
+`Mandatory context:`, and other execution metadata. `/pmcontext:execute` reads
+`Tier:` to calibrate Phase 8 depth, `Libraries touched` to decide whether
+context7 is needed, and `Mandatory context:` to load the spec file and any
+additional type definition files at execution time.
 
 ## Communication tags
 
@@ -104,3 +106,6 @@ knows how to respond without reading code:
 - `PROJECT_BRIEF.md` — generated from codebase tour (not a static template)
 - `ROADMAP.md` — minimal starter, filled via brainstorming
 - Block appended to `CLAUDE.md` — PM–Claude Workflow protocol and communication tags
+
+`/pmcontext:plan` Phase 3 additionally reads:
+- `$PLUGIN_DIR/templates/spec-skeleton.md` — skeleton template Claude copies and fills field-by-field when writing a spec (interfaces with Before/After signatures, edge cases table, out of scope, assumptions)
