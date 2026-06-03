@@ -39,8 +39,8 @@ Each phase ends with an explicit exit gate. Claude will stop and ask for your ap
 | Prerequisites | Summary of project context loaded | Confirm it's accurate or correct it |
 | Phase 1 — Context Priming | Current architecture, constraints, prior decisions | Confirm understanding is correct |
 | Phase 2 — Exploration | Answers to: why, constraints, what's different | Confirm all three are clearly answered |
-| Phase 3 — Spec Writing | Spec + any conflicts with existing code | Approve spec; reject if assumptions are unverified |
-| Phase 4 — Plan Writing | Plan + answers to 4 checkpoint questions | Approve plan; each checkpoint must have specific findings, not "yes" |
+| Phase 3 — Spec Writing | Skeleton-based spec (interfaces, edge cases, assumptions) + self-review checklist | Approve spec; reject if any field is blank, unverified, or a library type lacks Path A/B annotation |
+| Phase 4 — Plan Writing | Plan with codebase sync table + Verify blocks, answers to 6 checkpoint questions | Approve plan; each checkpoint must have specific findings, not "yes" |
 | Phase 5 — Adversarial Review | Loop-back decision + intermediate state trace | Approve only when plan is structurally sound — this gate protects all of Phase 7 |
 | Phase 6 — TDD Planning | Agreed interfaces + prioritised test list | Confirm before any code is written |
 | Phase 7 — Implementation | All steps complete, all tests passing | Confirm before review starts |

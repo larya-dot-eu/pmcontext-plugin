@@ -92,6 +92,7 @@ Find the `## Session Launch` section at the end of the plan file. Extract:
 - **Gotchas** — things to watch for
 - **Start here** — first action
 - **End here** — success criteria
+- **Mandatory context** — spec file path and any additional type definition files to load (blank or `—` means none beyond the static tier)
 
 If the `## Session Launch` section is missing, warn:
 ```
