@@ -230,11 +230,23 @@ If `gate_cleared = false`, output and stop:
 [BLOCKED] Phase 2 gate not recorded. The exploration exit gate (why, constraints, difference) must be confirmed before writing a spec.
 ```
 
-Write a spec that covers:
-- Behavior and expected outcomes
-- Interfaces: inputs, outputs, APIs, data shapes
-- Edge cases and error states
-- Assumptions you are making — state them explicitly
+**Step 1 — Identify affected files:**
+
+From the Phase 2 exploration output, list the files most likely to be touched by this feature. Read each one now using the Read tool. If no files can be identified from Phase 2, ask the user to name at least one file before proceeding. This is a preliminary list — Phase 4 codebase sync will finalize and may extend it.
+
+**Step 2 — Copy spec skeleton:**
+
+Read `$PLUGIN_DIR/templates/spec-skeleton.md` via the Read tool (PLUGIN_DIR is the value extracted from `~/.pmcontext`). Write its content to `docs/superpowers/specs/YYYY-MM-DD-[feature]-design.md`. Do not write freeform prose — complete every field in the skeleton form.
+
+**Step 3 — Fill the skeleton:**
+
+- **`## Problem` and `## Goal`:** One paragraph each from Phase 2 findings.
+- **`## Interfaces`:** One subsection per changed interface. Paste the exact current signature from the file read in Step 1 into `Before:`. Write the exact new signature into `After:`. For every type in `After:` that originates from a third-party library, take one of:
+  - **Path A:** Output `[CONTEXT7] Fetching docs for <library> → done` — fetch context7 docs for the library now, use the result for the accurate type definition.
+  - **Path B:** Output `[KNOWN] <library>/<API> — core stable API, training knowledge sufficient. No fetch.` — allowed only for React hooks, TypeScript built-ins, standard DOM APIs. Not allowed for version-sensitive APIs, configuration options, or detailed type hierarchies.
+- **`## Edge Cases & Error States`:** Complete the table with at minimum: empty input, invalid input, external dependency failure.
+- **`## Out of Scope`:** At least one explicit exclusion.
+- **`## Assumptions`:** Every assumption with a `file:line` or "confirmed with user" reference.
 
 ### Transition Checkpoint
 
@@ -244,7 +256,15 @@ Before writing any plan, verify against the codebase:
 
 Report findings explicitly — do not summarize as "looks good." Fix any conflicts or unverified assumptions before proceeding.
 
-**Exit gate:** Spec verified against codebase. No unresolved conflicts. No unverified assumptions. User has approved. Write the Phase 3 gate and mark the task as completed:
+**Phase 3 Self-Review Checklist** (run inline — fix issues before exit gate, no re-review needed):
+- [ ] No field contains `[`, `TBD`, or `TODO`
+- [ ] Every `After:` type is consistent with types used elsewhere in the spec
+- [ ] Every `After:` type from a third-party library has taken Path A or Path B — no silent skip allowed
+- [ ] Edge cases table has ≥ 3 rows covering: empty input, invalid input, external dep failure
+- [ ] `Out of Scope` has ≥ 1 entry
+- [ ] Every assumption has a non-blank `Verified by` entry
+
+**Exit gate:** Self-review checklist passed. No unresolved conflicts. User has approved. Write the Phase 3 gate and mark the task as completed:
 
 ```sql
 UPDATE pm_sessions
@@ -252,6 +272,13 @@ SET phase_gates = phase_gates || jsonb_build_object(
     'phase_3', jsonb_build_object(
         'spec_verified', true,
         'no_conflicts', true,
+        'sections_complete', jsonb_build_object(
+            'interfaces', true,
+            'edge_cases_table', true,
+            'out_of_scope', true,
+            'assumptions', true
+        ),
+        'self_review_passed', true,
         'approved_at', NOW()
     )
 ),
