@@ -36,18 +36,49 @@ Read the plan file at the path provided in $ARGUMENTS. If the file does not exis
 ```
 and stop.
 
-## Step 2: Load Project Context
+## Step 2: Load Mandatory Context Set
 
-Read the following files from the project root if they exist (run checks in parallel via Bash tool):
+**Static tier (full — files + Supabase):**
+
+Run file checks in parallel via Bash tool:
 ```bash
+test -f CLAUDE.md && echo "exists" || echo "missing"
 test -f CONTEXT.md && echo "exists" || echo "missing"
+test -f ROADMAP.md && echo "exists" || echo "missing"
 test -f PROJECT_BRIEF.md && echo "exists" || echo "missing"
+```
+
+Read each file that exists. Missing files: warn and continue — do not block execution.
+
+Query pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+```sql
+SELECT open_decisions, active_risks
+FROM pm_state
+WHERE project = '<project>';
+```
+
+**Feature-specific tier:**
+
+Read the `## Session Launch` section (already parsed in Step 3 — use those values). Extract `Mandatory context:`. If non-empty, read each listed file. If absent or blank:
+```
+[WARN] No Mandatory context: field found — loading static tier only.
+```
+
+If `Libraries touched:` is non-empty, fetch context7 docs for each library as a confirmation pass (Phase 4 fetched them during planning; this ensures they are available in this session).
+
+Output:
+```
+[CONTEXT LOADED]
+  CLAUDE.md          ✓     (or [missing])
+  CONTEXT.md         ✓     (or [missing])
+  ROADMAP.md         ✓     (or [missing])
+  pm_state           ✓ (<n> open decisions, <n> active risks)    (or [no row])
+  mandatory context: ✓ <n> files    (or [none defined])
+  libraries:         ✓ context7: <list>    (or [none])
 ```
 
 - **CONTEXT.md** — Node Model (Surface vs Core nodes). Use the `[BLAST RADIUS]` tag when a plan step changes a Core Node.
 - **PROJECT_BRIEF.md** — Surface Node Inventory and Core Node Map. Use this to identify which Surface Nodes a plan step may affect.
-
-If either file is missing, continue without it — do not block execution.
 
 ## Step 3: Parse the Session Launch Section
 
