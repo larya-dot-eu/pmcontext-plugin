@@ -10,6 +10,8 @@ Supabase MCP must be available. Attempt to use it. If unavailable, output and st
 Install or configure the Supabase MCP server and try again.
 ```
 
+> **Supabase MCP tool names:** `mcp__claude_ai_Supabase__*` below assumes the common Supabase MCP install. If your server uses a different prefix, call the equivalent tool from whatever Supabase MCP is available — same SQL, same parameters.
+
 ## Step 1: Discover Supabase Projects
 
 Use `mcp__claude_ai_Supabase__list_projects` to list all available projects.

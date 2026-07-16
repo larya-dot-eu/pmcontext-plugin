@@ -19,6 +19,13 @@ If the file is missing or `SUPABASE_PROJECT_ID` is blank, output and stop:
 Run /pmcontext:init to complete setup.
 ```
 
+Detect the current project name:
+- Run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool.
+- If not in a git repo, run `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'` instead.
+- Use this value as `<project>` in all SQL WHERE clauses below.
+
+> **Supabase MCP tool names:** `mcp__claude_ai_Supabase__*` below assumes the common Supabase MCP install. If your server uses a different prefix, call the equivalent tool from whatever Supabase MCP is available — same SQL, same parameters.
+
 The plan path is: $ARGUMENTS
 
 If $ARGUMENTS is empty, output:
@@ -59,7 +66,7 @@ WHERE project = '<project>';
 
 **Feature-specific tier:**
 
-Read the `## Session Launch` section (already parsed in Step 3 — use those values). Extract `Mandatory context:`. If non-empty, read each listed file. If absent or blank:
+Read and parse the `## Session Launch` section of the plan file now (Step 3 below gives the full field list). Extract `Mandatory context:`. If non-empty, read each listed file. If absent or blank:
 ```
 [WARN] No Mandatory context: field found — loading static tier only.
 ```
@@ -134,9 +141,20 @@ Context will be limited. Proceeding with plan execution.
 
 ## Step 5: Create Session Row
 
-Detect the current project name: run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool. If not in a git repo, use `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'`.
-
 Count the total plan steps (checkbox items `- [ ]` in the plan file).
+
+**Guard — check for an existing open session first:**
+```sql
+SELECT id, plan_name, status FROM pm_sessions
+WHERE project = '<project>' AND status IN ('active', 'paused')
+ORDER BY updated_at DESC LIMIT 1;
+```
+If a row is returned, stop and output:
+```
+[BLOCKED] An open session already exists: <plan_name> (<status>).
+Run /pmcontext:close to finish it, or /pmcontext:resume to continue it, before starting a new plan.
+```
+Only create the row below if no open session exists (or the user explicitly confirms a second concurrent session).
 
 Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 ```sql
@@ -299,7 +317,7 @@ Apply any doc updates flagged in Phase 8:
 - **`CLAUDE.md`** — add new patterns or constraints established this session
 - **`ROADMAP.md`** — update priorities or direction if they shifted
 
-If new open decisions or risks surfaced during execution, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+If new open decisions or risks surfaced during execution, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`. Double any single quote inside the JSON values (`'` → `''`) before substituting:
 ```sql
 INSERT INTO pm_state (project, open_decisions, active_risks, updated_at)
 VALUES ('<project>', '<open_decisions_json>', '<active_risks_json>', NOW())

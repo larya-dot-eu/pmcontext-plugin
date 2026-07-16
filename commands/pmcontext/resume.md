@@ -31,6 +31,8 @@ Detect the current project name:
   ```
   [BLOCKED] /pmcontext:resume requires Supabase MCP
   ```
+
+> **Supabase MCP tool names:** `mcp__claude_ai_Supabase__*` below assumes the common Supabase MCP install. If your server uses a different prefix, call the equivalent tool from whatever Supabase MCP is available — same SQL, same parameters.
 - `superpowers:executing-plans`:
   ```
   [BLOCKED] /pmcontext:resume requires superpowers:executing-plans
@@ -232,7 +234,7 @@ Apply any doc updates flagged in Phase 8:
 - **`CLAUDE.md`** — add new patterns or constraints established this session
 - **`ROADMAP.md`** — update priorities or direction if they shifted
 
-If new open decisions or risks surfaced, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+If new open decisions or risks surfaced, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`. Double any single quote inside the JSON values (`'` → `''`) before substituting:
 ```sql
 INSERT INTO pm_state (project, open_decisions, active_risks, updated_at)
 VALUES ('<project>', '<open_decisions_json>', '<active_risks_json>', NOW())

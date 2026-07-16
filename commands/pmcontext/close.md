@@ -27,6 +27,8 @@ Detect the current project name:
   [BLOCKED] /pmcontext:close requires Supabase MCP
   ```
 
+> **Supabase MCP tool names:** `mcp__claude_ai_Supabase__*` below assumes the common Supabase MCP install. If your server uses a different prefix, call the equivalent tool from whatever Supabase MCP is available — same SQL, same parameters.
+
 **Recommended — warn and continue:**
 - `superpowers:finishing-a-development-branch`:
   `[WARN] superpowers:finishing-a-development-branch not found — branch completion guidance unavailable`
@@ -57,6 +59,8 @@ Based on everything done this session, fill in the following fields honestly:
 - **manual_checks** — exact steps the PM must take to verify this session's work before it goes live.
 
 ## Write Receipt to Supabase
+
+**Before substituting any receipt field into the SQL below, double every single quote in the value (`'` → `''`).** These fields hold free text (commit messages, file paths, assumptions) — an unescaped apostrophe breaks the query.
 
 Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 
@@ -106,6 +110,19 @@ SET
 ```
 
 If no new decisions or risks: skip this query.
+
+(Same escaping rule applies here — double any single quote inside `<open_decisions_json>` / `<active_risks_json>` before substituting.)
+
+## Record Checkpoint
+
+If any verification or test command was run this session (test suite, type check, smoke test), record its result so `/pmcontext:status` and `/pmcontext:start` can show it. Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+```sql
+INSERT INTO pm_state (project, last_checkpoint, updated_at)
+VALUES ('<project>', jsonb_build_object('result', '<PASS or FAIL>', 'date', '<YYYY-MM-DD>'), NOW())
+ON CONFLICT (project) DO UPDATE
+SET last_checkpoint = EXCLUDED.last_checkpoint, updated_at = NOW();
+```
+If no verification ran this session, skip this query.
 
 ## Output Receipt
 

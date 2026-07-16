@@ -30,6 +30,8 @@ and stop.
 
 Detect the current project name: run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool. If not in a git repo, use `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'`.
 
+> **Supabase MCP tool names:** `mcp__claude_ai_Supabase__*` below assumes the common Supabase MCP install. If your server uses a different prefix, call the equivalent tool from whatever Supabase MCP is available — same SQL, same parameters.
+
 ## Step 1: Load Mandatory Context Set
 
 Run file checks in parallel via Bash tool:
@@ -65,6 +67,19 @@ Do not proceed until the user confirms.
 
 ## Step 3: Create Session Row
 
+**Guard — check for an existing open session first:**
+```sql
+SELECT id, plan_name, status FROM pm_sessions
+WHERE project = '<project>' AND status IN ('active', 'paused')
+ORDER BY updated_at DESC LIMIT 1;
+```
+If a row is returned, stop and output:
+```
+[BLOCKED] An open session already exists: <plan_name> (<status>).
+Run /pmcontext:close to finish it, or /pmcontext:resume to continue it, before starting new work.
+```
+Only create the row below if no open session exists (or the user explicitly confirms a second concurrent session).
+
 Run via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
 
 ```sql
@@ -97,10 +112,10 @@ If verification fails, fix the issue before marking done — do not close a brok
 
 Mark the task as completed.
 
-Update the session row:
+Update the session row — leave `status = 'active'` so `/pmcontext:close` can find it and write the receipt (do **not** set `completed` here, or close will miss it and create an orphan row):
 ```sql
 UPDATE pm_sessions
-SET status = 'completed', updated_at = NOW()
+SET updated_at = NOW()
 WHERE id = '<SESSION_ID>';
 ```
 

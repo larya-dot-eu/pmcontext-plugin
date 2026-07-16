@@ -29,6 +29,8 @@ Detect the current project name:
   Install or configure the Supabase MCP server to continue.
   ```
 
+> **Supabase MCP tool names:** `mcp__claude_ai_Supabase__*` below assumes the common Supabase MCP install. If your server uses a different prefix, call the equivalent tool from whatever Supabase MCP is available — same SQL, same parameters.
+
 ## Queries
 
 Run both queries via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`.

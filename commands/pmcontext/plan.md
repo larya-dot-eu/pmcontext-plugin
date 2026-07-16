@@ -35,6 +35,8 @@ Detect the current project name:
 - If not in a git repo, run `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'` instead.
 - Use this value as `<project>` in SQL WHERE clauses below.
 
+> **Supabase MCP tool names:** `mcp__claude_ai_Supabase__*` below assumes the common Supabase MCP install. If your server uses a different prefix, call the equivalent tool from whatever Supabase MCP is available — same SQL, same parameters.
+
 ## Prerequisite Check
 
 **Required — abort if missing:**
@@ -527,7 +529,7 @@ Apply any updates surfaced during the planning session:
 - **`CLAUDE.md`** — add new patterns, constraints, or conventions discovered during exploration or spec writing
 - **`ROADMAP.md`** — update priorities or direction if they shifted during Phase 2 or Phase 5
 
-If any new open decisions or risks surfaced during planning, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`:
+If any new open decisions or risks surfaced during planning, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`. Double any single quote inside the JSON values (`'` → `''`) before substituting:
 ```sql
 INSERT INTO pm_state (project, open_decisions, active_risks, updated_at)
 VALUES ('<project>', '<open_decisions_json>', '<active_risks_json>', NOW())
