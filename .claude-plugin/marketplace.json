@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "pmcontext",
-      "description": "PM-Claude workflow — tiered planning and execution (quick/standard/full), phase gate enforcement, session tracking. Commands: init, start, quick, plan, execute, resume, close, status. Backed by Supabase.",
+      "description": "PM-Claude workflow — tiered planning and execution (quick/standard/full), phase gate enforcement, deploy gates, session tracking. Commands: init, start, quick, plan, execute, resume, deploy, close, status. Backed by Supabase.",
       "source": {
         "source": "url",
         "url": "https://github.com/larya-dot-eu/pmcontext-plugin.git",

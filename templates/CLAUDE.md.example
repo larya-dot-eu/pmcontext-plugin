@@ -22,6 +22,7 @@ Pick the right tier before starting — using more process than the task needs w
 | `/pmcontext:plan --full` | Full | Architectural change, new subsystem, novel approach, or anything risky. All 9 phases with HTML companions and full adversarial review with loop-back analysis. |
 | `/pmcontext:execute <plan-file>` | — | Run after `/pmcontext:plan`. Reads the plan file to determine tier. |
 | `/pmcontext:resume` | — | Continue a paused session. |
+| `/pmcontext:deploy` | — | Before shipping to production — any tier, including quick. Runs the gates against a real running system, then asks before touching prod. `--gate-only` to check without deploying. |
 
 **Not sure which tier?** Ask: how many files will change, and is the approach already established in this codebase?
 - 1–2 files, known pattern → Quick
@@ -41,15 +42,29 @@ Each phase ends with an explicit exit gate. Claude will stop and ask for your ap
 | Prerequisites | `[CONTEXT LOADED]` banner listing which files were found (CLAUDE.md, CONTEXT.md, ROADMAP.md) | Confirm it's accurate or correct it |
 | Phase 1 — Context Priming | Current architecture, constraints, prior decisions | Confirm understanding is correct |
 | Phase 2 — Exploration | Answers to: why, constraints, what's different | Confirm all three are clearly answered |
-| Phase 3 — Spec Writing | Skeleton-based spec (interfaces, edge cases, assumptions) + self-review checklist | Approve spec; reject if any field is blank, unverified, or a library type's `After:` block lacks either `[CONTEXT7] docs fetched for <lib>` or `[KNOWN] <lib> — <reason>` |
+| Phase 3 — Spec Writing | Skeleton-based spec (interfaces, edge cases, access-control matrix, expected scale, assumptions) + self-review checklist | Approve spec; reject if any field is blank, unverified, or a library type's `After:` block lacks either `[CONTEXT7] docs fetched for <lib>` or `[KNOWN] <lib> — <reason>`. Read the access-control matrix as a product question — "should an anonymous visitor really be able to do that?" — and check every scale number against what you actually expect |
 | Phase 4 — Plan Writing | Plan with codebase sync table + Verify blocks, answers to 6 checkpoint questions | Approve plan; each checkpoint must have specific findings, not "yes" |
-| Phase 5 — Adversarial Review | Loop-back decision + intermediate state trace | Approve only when plan is structurally sound — this gate protects all of Phase 7 |
+| Phase 5 — Adversarial Review | Three passes: structural (loop-back decision + intermediate state trace), security abuse vs the access-control matrix, load vs the expected-scale numbers | Approve only when the plan is structurally sound — this gate protects all of Phase 7. Rule on any access the plan widens (Claude must state it in plain language), and reject Pass C if "what breaks first at 10× peak" has no named answer |
 | Phase 6 — TDD Planning | Agreed interfaces + prioritised test list | Confirm before any code is written |
 | Phase 7 — Implementation | All steps complete, all tests passing | Confirm before review starts |
 | Phase 8 — Post-Implementation | Plan vs. reality diff, doc update flags | Confirm findings; flag anything that needs follow-up |
-| Phase 9 — Living Doc Update | CLAUDE.md and ROADMAP.md changes applied | Confirm docs reflect what was actually built |
+| Phase 9 — Living Doc Update | CLAUDE.md and ROADMAP.md changes applied; access-control and scale tables reconciled against what shipped | Confirm docs reflect what was actually built — especially any access a role gained |
 
 Claude cannot proceed to the next phase until the current gate is written to Supabase. If a gate is missing, you will see `[BLOCKED]` — go back and complete the phase properly rather than bypassing it.
+
+### Deploy Gates
+
+`/pmcontext:deploy` is not a phase — run it whenever you are about to ship, from any tier. Every other phase reads documents; this one runs the system. Three gates, each PASS/FAIL:
+
+| Gate | What it proves |
+|------|----------------|
+| A — Artifact | It builds clean, boots, health responds, no secrets inside, nothing uncommitted |
+| B — Security | Each row of the access-control matrix replayed as real requests — user B is actually denied user A's data, with the status code shown |
+| C — Operational | Hot queries indexed, survives restart and a second replica, growth bounded, monitoring exists |
+
+Your job: read the verdict and the `N/A CHECKS` list — a check that could not run is never a pass. Claude stops and asks before touching production, and names the rollback target first. Nothing ships without your explicit yes.
+
+If Gate B disagrees with the access-control matrix, the gate is right and the matrix is wrong.
 
 ### Communication Tags
 

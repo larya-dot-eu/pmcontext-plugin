@@ -79,6 +79,7 @@ Safe to re-run — uses `CREATE TABLE IF NOT EXISTS`.
 | `/pmcontext:plan --full` | Full tier — same as above with HTML companions and full adversarial review |
 | `/pmcontext:execute <plan>` | Executes a plan file end-to-end with TDD, phase gate enforcement, and task tracking |
 | `/pmcontext:resume` | Continues the last paused or active session from where it left off |
+| `/pmcontext:deploy` | Pre-deploy gates against a running system — proves the artifact builds and boots, replays the access-control matrix as real requests, checks operational readiness, then deploys with a verified rollback target. `--gate-only` reports without deploying |
 | `/pmcontext:close` | End of session — writes receipt to Supabase, updates project state |
 | `/pmcontext:status` | Quick dashboard — decisions, risks, checkpoint, active session |
 

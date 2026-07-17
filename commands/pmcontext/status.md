@@ -16,7 +16,7 @@ Read the Supabase project ID:
 
 Detect the current project name:
 - Run `git rev-parse --show-toplevel 2>/dev/null | xargs basename | tr -cd 'a-zA-Z0-9_-'` via Bash tool.
-  Example: `/home/chris/GitHubReps/linkedin` → `linkedin`
+  Example: `~/code/linkedin` → `linkedin`
 - If not in a git repo, run `basename "$PWD" | tr -cd 'a-zA-Z0-9_-'` instead.
 - Use this value as `<project>` in SQL WHERE clauses below.
 

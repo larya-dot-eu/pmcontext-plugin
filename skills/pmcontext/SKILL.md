@@ -12,13 +12,13 @@ description: >
 ## What pmcontext is
 
 A PM-Claude workflow plugin that brings structured planning and execution to any
-codebase. It ships eight slash commands (`/pmcontext:*`) backed by a Supabase
+codebase. It ships nine slash commands (`/pmcontext:*`) backed by a Supabase
 database for session tracking and project state.
 
 No application code — every command is a Markdown instruction file that Claude
 reads and executes directly.
 
-## The eight commands
+## The nine commands
 
 | Command | Purpose |
 |---------|---------|
@@ -28,6 +28,7 @@ reads and executes directly.
 | `/pmcontext:plan` | Standard/full tier: Phases 1–5 planning → produces a plan file |
 | `/pmcontext:execute` | Phases 6–9: TDD → implementation → review → living doc update |
 | `/pmcontext:resume` | Continue the last paused or active session |
+| `/pmcontext:deploy` | Pre-deploy gates against a running system, then deploy with a verified rollback target |
 | `/pmcontext:close` | Write session receipt to Supabase, update pm_state |
 | `/pmcontext:status` | Quick dashboard: open decisions, active risks, current session |
 

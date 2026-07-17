@@ -317,6 +317,25 @@ Apply any doc updates flagged in Phase 8:
 - **`CLAUDE.md`** — add new patterns or constraints established this session
 - **`ROADMAP.md`** — update priorities or direction if they shifted
 
+**Mirror the spec's security and scale sections into `CLAUDE.md`** (standard and full tiers — quick tier has no spec, skip this). Read the spec file this plan came from, then:
+
+The `### Access Control` and `### Expected Scale` tables in `CLAUDE.md` are **project-wide and cumulative** — one of each for the whole project, covering every feature built so far. Never append a second matrix per feature.
+
+If `CLAUDE.md` has no `### Access Control` section, append both tables under the `## PM–Claude Workflow` block, seeded from the spec's `## Access-Control Matrix` and `## Expected Scale`.
+
+If they exist, merge rather than overwrite. **The merge key is the `(Role, Resource)` pair:**
+
+| Spec row vs `CLAUDE.md` | Action |
+|---|---|
+| Pair not in the table | New boundary — add the row |
+| Pair present, same access | Nothing to do |
+| Pair present, access differs | **Boundary change** — update the row and report it at the gate as `[RISK] <role> on <resource>: <old> → <new>` |
+| Pair in the table, untouched by this feature | Leave alone — other features own those rows |
+
+Before writing, reconcile each row against what was actually built, not what the spec intended: open the migration, policy, or handler that enforces it and confirm the row matches. The spec is intent, the code is truth — where they disagree the code wins and the gap is a `[RISK]`, not a silent edit. A row whose `Enforced by` says a database policy but which is really only checked in app code must be corrected to say so.
+
+Widened access (`own only` → `all`, or any new `anon` row) is never merged silently. Surface it to the PM at the Phase 9 gate even when it was exactly what the plan called for.
+
 If new open decisions or risks surfaced during execution, update pm_state via `mcp__claude_ai_Supabase__execute_sql` with `project_id = <PROJECT_ID>`. Double any single quote inside the JSON values (`'` → `''`) before substituting:
 ```sql
 INSERT INTO pm_state (project, open_decisions, active_risks, updated_at)

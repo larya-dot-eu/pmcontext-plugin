@@ -4,6 +4,24 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.1.0] — 2026-07-17
+
+### Added
+- **`/pmcontext:deploy`** — new command (the ninth). Runs pre-deploy gates against a real running system rather than against documents: **Gate A** artifact (clean build, boots, health responds, nothing uncommitted, no secrets in the build output), **Gate B** security (each `(Role, Resource)` row of the access-control matrix replayed as real requests — unauthenticated access, IDOR replay, role separation, owner-from-session, input validation, string-built SQL, cookie flags, CORS, rate limiting, error hygiene), **Gate C** operational (`EXPLAIN` on hot queries, restart survival, second replica, bounded growth, monitoring, backpressure). Then verifies a rollback target, reports PASS/FAIL to the PM, and **stops for explicit confirmation before touching production**. On approval: deploy → confirm health → re-check auth against prod → watch → merge/tag/announce last. `--gate-only` runs the gates without deploying. Rollback-first-diagnose-second on any failure.
+- **Access-Control Matrix** — required spec section, keyed on `(Role, Resource)`: read, create/modify/delete, ownership key, and where enforcement actually runs. Includes a token-revocation question. Blanks are rejected; "no boundaries" must be written explicitly with a reason.
+- **Expected Scale** — required spec section: peak traffic, hot-table rows now → 1 year, unbounded growth, hot queries needing indexes, big scans/joins, state location. Every row needs a named number marked `measured` or `assumed`.
+- **Phase 5 Pass B (security abuse) and Pass C (load)** — the adversarial review is now three passes. Pass B attacks the plan against the access-control matrix; Pass C attacks it against the expected-scale numbers ("what breaks first at 10× peak"). Both run on standard and full tiers; tier changes depth, not whether they run. Findings are recorded in `phase_gates` as `abuse_pass` / `load_pass`.
+
+### Changed
+- **Phase 9** now merges the access-control and expected-scale tables into the project's `CLAUDE.md` as project-wide cumulative tables, merged on the `(Role, Resource)` pair. A collision on an existing pair is a boundary change and is surfaced as `[RISK]` rather than silently overwritten. Rows are reconciled against the code that enforces them — where spec and code disagree, the code wins.
+- **Phase 3** now reads the existing access-control table before writing, so a boundary change surfaces at spec time instead of at Phase 9.
+- `templates/CLAUDE.md.example` — new Deploy Gates section; Phase 3/5/9 gate rows updated to describe the PM's job for the new passes. *(Note: existing installs keep their original block — the workflow block is written once and not yet migrated.)*
+
+### Notes
+- **No schema migration required.** Deploy records are written into the existing `phase_gates` JSONB rather than a new column or a new `session_type` value — `session_type` has a CHECK constraint that `CREATE TABLE IF NOT EXISTS` cannot amend on already-configured installs. Existing users update and run `/pmcontext:deploy` against their current tables with no database work.
+
+---
+
 ## [1.0.7] — 2026-06-03
 
 ### Fixed

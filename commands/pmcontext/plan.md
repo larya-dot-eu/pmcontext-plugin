@@ -247,6 +247,10 @@ Read `$PLUGIN_DIR/templates/spec-skeleton.md` via the Read tool (PLUGIN_DIR is t
   - **Path A:** Output `[CONTEXT7] Fetching docs for <library> → done` — fetch context7 docs for the library now, use the result for the accurate type definition.
   - **Path B:** Output `[KNOWN] <library>/<API> — core stable API, training knowledge sufficient. No fetch.` — allowed only for React hooks, TypeScript built-ins, standard DOM APIs. Not allowed for version-sensitive APIs, configuration options, or detailed type hierarchies.
 - **`## Edge Cases & Error States`:** Complete the table with at minimum: empty input, invalid input, external dependency failure.
+- **`## Access-Control Matrix`:** One row per **role × resource** this feature touches, where a resource is a table, endpoint group, or file store. For each: what the role can read, what it can create/modify/delete, the ownership key that scopes it to its own rows, and where the check is enforced. Name resources exactly as the project already names them — `(Role, Resource)` is the merge key Phase 9 uses against the project-wide table in `CLAUDE.md`, so a typo silently creates a second row instead of updating the real one. Prefer database-level enforcement (e.g. an RLS policy) over app code — if it is app-code-only, say so, that is a finding. Answer the token-revocation question with a named mechanism. Never leave the table blank: a feature with no boundaries gets one explicit "public by design" row and a reason.
+
+  Before writing the rows, read the `### Access Control` table in the project's `CLAUDE.md` if it exists. Any `(Role, Resource)` pair you are about to write that is already there is an existing boundary you are changing — write the new state in the spec and flag it now as `[RISK] widening/narrowing existing access: <role> on <resource>`. Do not wait for Phase 9 to discover it.
+- **`## Expected Scale`:** Every row gets a named number. Use a real measurement where one exists (row counts from the database, traffic from logs); otherwise write the assumed number and mark it `assumed`. Flag any table that grows unbounded and any hot query without an index — both are Phase 5 inputs.
 - **`## Out of Scope`:** At least one explicit exclusion.
 - **`## Assumptions`:** Every assumption with a `file:line` or "confirmed with user" reference.
 
@@ -263,6 +267,9 @@ Report findings explicitly — do not summarize as "looks good." Fix any conflic
 - [ ] Every `After:` type is consistent with types used elsewhere in the spec
 - [ ] Every `After:` type from a third-party library has taken Path A or Path B — no silent skip allowed
 - [ ] Edge cases table has ≥ 3 rows covering: empty input, invalid input, external dep failure
+- [ ] `Access-Control Matrix` has a row per role × resource touched, each with an `Ownership key` (or `—`) and an `Enforced by`, plus a token-revocation answer — no blanks
+- [ ] Every `(Role, Resource)` pair already present in the project's `CLAUDE.md` access table is either unchanged or flagged `[RISK]` as a boundary change
+- [ ] `Expected Scale` has a named number in every row, each marked `measured` or `assumed`
 - [ ] `Out of Scope` has ≥ 1 entry
 - [ ] Every assumption has a non-blank `Verified by` entry
 
@@ -277,6 +284,8 @@ SET phase_gates = phase_gates || jsonb_build_object(
         'sections_complete', jsonb_build_object(
             'interfaces', true,
             'edge_cases_table', true,
+            'access_control_matrix', true,
+            'expected_scale', true,
             'out_of_scope', true,
             'assumptions', true
         ),
@@ -444,7 +453,13 @@ If `gate_cleared = false`, output and stop:
 [BLOCKED] Phase 4 gate not recorded. The plan's four checkpoint questions must be answered and approved before the adversarial review.
 ```
 
-Switch from generation mode to review mode. Goal: find structural problems, not defend the plan.
+Switch from generation mode to review mode. Goal: find problems, not defend the plan.
+
+Three passes, all required on both tiers — Pass A against the plan, Pass B against the spec's `## Access-Control Matrix`, Pass C against the spec's `## Expected Scale`. Tier changes the depth of each, never whether it runs. Read the spec file now; Passes B and C are scored against it, not against memory of it.
+
+---
+
+## Pass A — Structural
 
 ---
 
@@ -479,12 +494,63 @@ Check:
 
 ---
 
-**Exit gate (both tiers):** Plan is structurally sound. No broken intermediate states. Dependency order correct. All assumptions surfaced and verified. User has approved.
+## Pass B — Security Abuse
+
+Attack the plan against the spec's `## Access-Control Matrix`. For each `(Role, Resource)` row the plan touches, ask what a hostile client does with it. Report each as PASS or a `[RISK]` with the specific row and plan step — never a summary.
+
+| Check | The question | Fails when |
+|---|---|---|
+| **IDOR** | Role A requests role B's row by guessing its id — say, a `GET` on another user's comment id. What stops it? | The ownership key is not in the query's `WHERE`, or the check is a client-side filter |
+| **Enforcement location** | Does the check run where `Enforced by` claims? Name the migration, policy, or middleware. | The row says a database policy but the plan only adds an app-code `if` — the next caller of that table skips it |
+| **Unauthenticated reach** | Which new routes/handlers does the plan add, and which are reachable with no token? | A route serves a non-`anon` resource without an auth check |
+| **Input validation** | Every new input crossing a trust boundary — validated server-side, or only in the form? | Validation exists only client-side, or a free-text field reaches a query unparameterized |
+| **Ownership on write** | On create/update, is the owner taken from the session or from the request body? | The body supplies `author_id` — the client picks who it is |
+| **Token revocation** | Does the plan honor the spec's stated mechanism? | A new long-lived credential appears with no way to revoke it |
+
+**Standard tier:** cover only the `(Role, Resource)` rows this plan touches, one line of evidence each.
+**Full tier:** all of the above, plus — every row the plan touches *indirectly* (a shared table, a reused handler, a widened query), and the abuse chain: what does a compromised `user` reach from here, and does any step move a check from the database into app code?
+
+**Any row where the plan widens access** (`own only` → `all`, or a new `anon` row) is reported to the user here even when it is exactly what the plan intends.
+
+---
+
+## Pass C — Load
+
+Attack the plan against the spec's `## Expected Scale`. Every finding names a number.
+
+| Check | The question | Fails when |
+|---|---|---|
+| **Hot query indexing** | Each query the plan adds — which index serves it? Match against the spec's "hot queries needing an index" row. | A hot query has no index, or filters on a column the index does not lead with |
+| **Growth** | Does the plan write to a table the spec marked unbounded? What bounds it — retention, pagination, archival? | Rows accumulate forever with no cap and no cleanup step |
+| **Query shape** | Any scan or join the plan adds that grows with table size rather than page size? Any query inside a loop? | A per-row query in a loop, or an unpaginated list endpoint |
+| **State location** | Does any new state live in process memory (cache, counter, session, upload buffer)? | It does — it dies on restart and is wrong the moment a second replica exists |
+| **Peak ×10** | Take the spec's peak traffic number, multiply by ten. What breaks first? Name it. | Nothing is named — that means the pass was not actually run |
+
+**Standard tier:** the five checks against the numbers already in the spec.
+**Full tier:** the above, plus — where the spec's numbers are marked `assumed`, say which finding flips if the real number is 10× off; and state the first bottleneck with its rough breaking point rather than only naming it.
+
+---
+
+## Loop-back from Passes B and C
+
+| Finding | Action |
+|---|---|
+| Plan step is missing or wrong — no index, missing auth check, ownership from body | Return to Phase 4 |
+| The spec is wrong — matrix row does not match what the feature needs, scale number is not credible | Return to Phase 3, fix the spec, re-run the pass |
+| The feature needs access or scale the project should not grant | Return to Phase 2 — this is a product decision, escalate to the user as `[RISK]` |
+
+A Pass B or Pass C finding never gets patched inline without also fixing the spec section it contradicts. The spec is what Phase 9 merges into `CLAUDE.md` — leave it wrong and the wrong thing becomes the project's permanent record.
+
+---
+
+**Exit gate (both tiers):** Plan is structurally sound. No broken intermediate states. Dependency order correct. All assumptions surfaced and verified. Passes B and C run against the spec with every finding resolved or accepted by the user as a stated `[RISK]`. User has approved.
 
 Before writing the gate, explicitly state to the user:
 - Your loop-back decision: `none` OR `returned to Phase X because [reason], resolved as [resolution]`
 - Confirmation that all intermediate states between steps are consistent
 - Confirmation that the dependency order is correct
+- **Pass B result:** every `(Role, Resource)` row checked, and for each finding — what it was and how it was resolved. Any access this plan widens, stated in plain language the PM can rule on (`[RISK] any signed-in user will be able to delete another user's comment — intended?`)
+- **Pass C result:** the named answer to peak ×10 — what breaks first. If nothing was named, the pass did not run; run it.
 
 Write the Phase 5 gate and mark the task as completed:
 
@@ -495,6 +561,15 @@ SET phase_gates = phase_gates || jsonb_build_object(
         'loop_back_decision', '<none or description of what was fixed>',
         'intermediate_states_clean', true,
         'dependency_order_correct', true,
+        'abuse_pass', jsonb_build_object(
+            'rows_checked', <count of (Role, Resource) rows reviewed>,
+            'findings', '<what Pass B found and how each was resolved, or "none">',
+            'access_widened', '<role on resource: old -> new, accepted by user, or "none">'
+        ),
+        'load_pass', jsonb_build_object(
+            'findings', '<what Pass C found and how each was resolved, or "none">',
+            'first_bottleneck_at_10x', '<the named thing that breaks first>'
+        ),
         'approved_at', NOW()
     )
 ),
