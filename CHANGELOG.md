@@ -7,7 +7,7 @@ All notable changes to the pmcontext plugin are documented here.
 ## [1.2.2] — 2026-07-17
 
 ### Added
-- `check-release.sh` — dev-only release check asserting that what ships matches what's documented: every documented command resolves to a real file, every command is in the README, `marketplace.json`'s pin covers all shipped files and exists on the remote, and the version has a CHANGELOG entry. Not shipped to users; run before a release.
+- `check-release.sh` — release check asserting that what ships matches what's documented: every documented command resolves to a real file, every command is in the README, `marketplace.json`'s pin covers all shipped files and exists on the remote, and the version has a CHANGELOG entry. Run before a release. It is not a plugin surface — only `commands/`, `templates/`, and `skills/` are loaded by Claude Code — so it never registers as a command or runs for users, though it is present in the repo like `LICENSE` and this file.
 
 ---
 

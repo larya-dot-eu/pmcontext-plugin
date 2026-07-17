@@ -26,7 +26,11 @@ json() { python3 -c "import json,sys;print(json.load(open(sys.argv[1]))$2)" "$1"
 PLUGIN_JSON=.claude-plugin/plugin.json
 MARKET_JSON=.claude-plugin/marketplace.json
 DOCS=(README.md skills/pmcontext/SKILL.md templates/CLAUDE.md.example)
-SHIPPED_PATHS=(commands templates skills .claude-plugin/plugin.json)
+
+# Everything a user receives from a marketplace install and could act on. The
+# docs belong here: a pin that lags README.md installs stale instructions, which
+# is the same drift as a pin that lags a command file.
+SHIPPED_PATHS=(commands templates skills .claude-plugin/plugin.json README.md CHANGELOG.md)
 
 PLUGIN=$(json "$PLUGIN_JSON" '["name"]')
 VERSION=$(json "$PLUGIN_JSON" '["version"]')
@@ -85,6 +89,15 @@ printf '\nPin\n'
 
 SHA=$(json "$MARKET_JSON" '["plugins"][0]["source"]["sha"]')
 note "pinned at ${SHA:0:7}"
+
+# A pin can only ever point at a commit, so uncommitted work on a shipped file
+# is unreachable by definition — and the sha comparison below reads commits, not
+# the working tree, so it would not notice.
+DIRTY=$(git status --porcelain -- "${SHIPPED_PATHS[@]}" 2>/dev/null)
+if [ -n "$DIRTY" ]; then
+  fail "uncommitted changes to shipped files — nothing can pin these:"
+  echo "$DIRTY" | sed 's/^/          /'
+fi
 
 if ! git cat-file -e "$SHA^{commit}" 2>/dev/null; then
   fail "pinned sha is not a commit in this repo"
