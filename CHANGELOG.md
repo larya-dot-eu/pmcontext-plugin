@@ -4,6 +4,19 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.2.4] — 2026-07-17
+
+### Fixed
+- **Both documented install commands were wrong.** `claude plugin install pmcontext@community` referenced a marketplace this plugin was never published to, and `claude plugin install --from-git ...` used a flag that does not exist. Neither could ever have worked. Replaced with the verified two-step flow: `claude plugin marketplace add larya-dot-eu/pmcontext-plugin` then `claude plugin install pmcontext@pmcontext-plugin`.
+
+### Added
+- **README: an Updating section.** There wasn't one. Covers refreshing the cached marketplace manifest before updating, the fully-qualified `pmcontext@pmcontext-plugin` name (a bare `pmcontext` errors with "Plugin not found"), and the workflow-block upgrade offer on the next `/pmcontext:start`.
+- **README now documents the security/scale spine and `/pmcontext:deploy`** — the access-control matrix and expected-scale spec sections, Phase 5's three passes, Phase 9's cumulative merge into `CLAUDE.md`, and the three deploy gates with the confirm-before-prod flow.
+- **README: "What it writes into your project"** — which files the plugin creates or edits, and that everything outside the `pmcontext` markers in your `CLAUDE.md` is yours and untouched.
+- README notes that every command stops with `[BLOCKED] pmcontext is not configured` until `/pmcontext:init` writes `~/.pmcontext`.
+
+---
+
 ## [1.2.3] — 2026-07-17
 
 ### Fixed
