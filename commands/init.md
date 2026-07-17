@@ -74,7 +74,7 @@ If `<PLUGIN_DIR>` is set, verify the templates are present:
 ```bash
 ls "<PLUGIN_DIR>/templates/"
 ```
-If `CONTEXT.md`, `ROADMAP.md`, or `spec-skeleton.md` are missing from the output, warn:
+If `CLAUDE.md.example`, `CONTEXT.md`, `ROADMAP.md`, or `spec-skeleton.md` are missing from the output, warn:
 ```
 [WARN] Plugin templates incomplete at <PLUGIN_DIR>/templates/ — some scaffolding may be unavailable.
 ```

@@ -4,6 +4,13 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.2.3] — 2026-07-17
+
+### Fixed
+- `init.md` now verifies `CLAUDE.md.example` is present alongside the other templates. It was checking three of the four and omitting the one it depends on at Step 5 — had it been missing, the workflow block would have silently failed to install with no warning.
+
+---
+
 ## [1.2.2] — 2026-07-17
 
 ### Added
