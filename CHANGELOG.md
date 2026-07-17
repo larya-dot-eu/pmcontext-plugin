@@ -4,6 +4,13 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.2.1] — 2026-07-17
+
+### Fixed
+- Command registration — commands now resolve as documented.
+
+---
+
 ## [1.2.0] — 2026-07-17
 
 ### Added
