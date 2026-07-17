@@ -1,7 +1,7 @@
 {
   "name": "pmcontext",
   "description": "PM-Claude workflow — tiered planning and execution (quick/standard/full), phase gate enforcement, deploy gates, session tracking. Commands: init, start, quick, plan, execute, resume, deploy, close, status. Backed by Supabase.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": {
     "name": "chris"
   }

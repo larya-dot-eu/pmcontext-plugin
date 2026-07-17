@@ -148,6 +148,8 @@ grep -q "## PM–Claude Workflow" CLAUDE.md 2>/dev/null && echo "exists" || echo
 
 **If "exists":** output `✓ CLAUDE.md already contains PM–Claude Workflow block — skipped` and stop this step.
 
+`init` never rewrites an existing block — it is one-time setup and has no business editing a file the project already owns. Keeping an installed block current is `/pmcontext:start`'s job: it compares the block's version marker against the template's on every session and offers the upgrade when they differ.
+
 **If "missing" and `<PLUGIN_DIR>` is set:**
 Append the template to the project's `CLAUDE.md` (creates the file if it does not exist):
 ```bash

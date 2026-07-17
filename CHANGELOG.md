@@ -4,6 +4,21 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.2.0] — 2026-07-17
+
+### Added
+- **Versioned workflow block.** `templates/CLAUDE.md.example` is now delimited by `<!-- pmcontext:block-start vN -->` / `<!-- pmcontext:block-end vN -->` markers. `/pmcontext:start` compares the version installed in the project's `CLAUDE.md` against the version the plugin ships and offers an upgrade when they differ. The shipped version is read from the template itself — there is no constant to forget to bump.
+
+### Fixed
+- **The workflow block no longer goes stale forever.** `init` and `start` previously grepped for `## PM–Claude Workflow` and skipped if present, so the block was written once at first install and never updated again. Every user who upgraded the plugin kept their original block — meaning that as of 1.1.0, existing users had the working `/pmcontext:deploy` command but a `CLAUDE.md` that never mentioned it, still said eight commands, and described the pre-1.1.0 Phase 3/5/9 gates. The block is the PM's description of their own job at each gate, so a stale one means the human follows instructions the commands no longer match.
+
+### Notes
+- **Upgrades are offered, never silent.** Claude states what the block is missing, in PM language, and asks. `CLAUDE.md.bak` is written first. Only the text between the markers is rewritten, **in place** — content before and after keeps its original position.
+- **Legacy blocks** (installed before versioning) have no markers, so the end of the block cannot be located reliably. If nothing follows the block, it is replaced from its heading to end of file — how `init`/`start` originally appended it. If any content follows it, the boundary is ambiguous and the upgrade is **refused** with manual instructions rather than guessed at.
+- `init` never rewrites an existing block; keeping it current is `start`'s job.
+
+---
+
 ## [1.1.0] — 2026-07-17
 
 ### Added

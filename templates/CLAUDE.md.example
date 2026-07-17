@@ -1,3 +1,9 @@
+<!-- pmcontext:block-start v2 -->
+<!-- Managed by the pmcontext plugin. /pmcontext:start offers to refresh this block
+     when the plugin ships a newer version. Edits inside the markers may be replaced
+     on upgrade (you will be asked first, and a backup is written). Put your own
+     project notes outside the markers, where nothing will touch them. -->
+
 ## PM–Claude Workflow
 
 This project uses the pmcontext plugin. Claude handles all technical execution.
@@ -98,3 +104,5 @@ Tests must be readable by the PM without touching code:
     PASS if / FAIL if — binary, unambiguous
 
 Three levels: happy path, edge case, error path.
+
+<!-- pmcontext:block-end v2 -->

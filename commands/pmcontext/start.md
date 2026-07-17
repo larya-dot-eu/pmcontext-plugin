@@ -74,17 +74,85 @@ test -f ROADMAP.md && echo "exists" || echo "missing"
 If missing: set `<roadmap_needed> = true`
 
 **Check 4 — CLAUDE.md pmcontext block:**
-```bash
-grep -q "## PM–Claude Workflow" CLAUDE.md 2>/dev/null && echo "exists" || echo "missing"
-```
-If missing and `<PLUGIN_DIR>` is set:
-```bash
-cat "<PLUGIN_DIR>/templates/CLAUDE.md.example" >> CLAUDE.md
-```
-Output: `✓ Updated CLAUDE.md`
 
-If missing and `<PLUGIN_DIR>` is blank:
-- Output: `[WARN] CLAUDE.md pmcontext block missing and plugin templates unavailable — run /pmcontext:init to fix.`
+The workflow block is versioned. It is the PM's description of their own job at each gate, so a stale block means the human is following instructions the commands no longer match.
+
+```bash
+grep -q "## PM–Claude Workflow" CLAUDE.md 2>/dev/null && echo "block:present" || echo "block:absent"
+grep -oE "pmcontext:block-start v[0-9]+" CLAUDE.md 2>/dev/null | head -1
+grep -oE "pmcontext:block-start v[0-9]+" "<PLUGIN_DIR>/templates/CLAUDE.md.example" 2>/dev/null | head -1
+```
+
+The third command is the version the plugin ships — never hardcode it here, always read it from the template.
+
+| State | Action |
+|---|---|
+| `block:absent`, PLUGIN_DIR set | Append the template: `cat "<PLUGIN_DIR>/templates/CLAUDE.md.example" >> CLAUDE.md` → `✓ Updated CLAUDE.md` |
+| `block:absent`, PLUGIN_DIR blank | `[WARN] CLAUDE.md pmcontext block missing and plugin templates unavailable — run /pmcontext:init to fix.` |
+| Installed version == shipped version | Nothing. Do not mention it. |
+| Installed version < shipped version | **Offer the upgrade** (below) |
+| `block:present` but no version marker | Legacy block, predates versioning — **offer the upgrade**, treating the installed version as `v1` |
+| PLUGIN_DIR blank and block present | Skip the version check silently — nothing to compare against |
+
+**Offering the upgrade:**
+
+Read the installed block and the shipped template. State plainly what the PM is missing — the actual differences, not "there is an update". Then:
+
+```
+[UPGRADE] Your CLAUDE.md workflow block is <v1 | vN>; the plugin ships <vN>.
+
+  Missing from yours:
+  <the real differences, in PM language — e.g. "the /pmcontext:deploy command
+   and its gates", "Phase 3 now asks you to review an access-control matrix">
+
+  Only the text between the pmcontext markers is rewritten, in place — the rest
+  of CLAUDE.md keeps its content and its order. CLAUDE.md.bak is written first.
+  If you edited anything inside the markers, those edits are lost.
+
+  Upgrade the block? (yes / no / show me)
+```
+
+`show me` → print the differences in full, then ask again. `no` → continue the session; do not nag further this session.
+
+**On yes:**
+
+```bash
+cp CLAUDE.md CLAUDE.md.bak
+```
+
+*If the installed block has markers* — replace the marked region **in place**, so the block keeps its position in the file:
+```bash
+awk -v tpl="<PLUGIN_DIR>/templates/CLAUDE.md.example" '
+  /<!-- pmcontext:block-start/ {skip=1; while ((getline line < tpl) > 0) print line; close(tpl)}
+  !skip {print}
+  /<!-- pmcontext:block-end/ {skip=0}
+' CLAUDE.md > CLAUDE.md.tmp && mv CLAUDE.md.tmp CLAUDE.md
+```
+The new block is printed at the old block's position and the old lines are skipped — content before *and* after the markers keeps its original order. (Appending instead would silently move the block to the end of the file, past anything the user wrote below it.)
+
+*If the installed block is legacy (no markers)* — the end of the block cannot be located by marker, so check what follows the heading before touching anything:
+```bash
+awk '/^## PM–Claude Workflow/{found=1; next} found && /^## /{print "content-after-block"; exit}' CLAUDE.md
+```
+- **No output** — the block runs from its heading to end of file (how `init`/`start` originally appended it). Safe to replace:
+  ```bash
+  awk '/^## PM–Claude Workflow/{exit} {print}' CLAUDE.md > CLAUDE.md.tmp
+  cat "<PLUGIN_DIR>/templates/CLAUDE.md.example" >> CLAUDE.md.tmp
+  mv CLAUDE.md.tmp CLAUDE.md
+  ```
+- **`content-after-block`** — something was added after the block and its end is ambiguous. **Do not guess.** Output:
+  ```
+  [SKIP] Your workflow block has content after it, so I cannot tell where the block
+  ends. Nothing was changed. To upgrade by hand: delete everything from
+  "## PM–Claude Workflow" down to (but not including) the next "## " heading, then
+  append <PLUGIN_DIR>/templates/CLAUDE.md.example.
+  ```
+
+Then confirm what happened:
+```bash
+grep -c "## PM–Claude Workflow" CLAUDE.md
+```
+Must print `1`. Anything else means the block was duplicated or lost — restore immediately with `mv CLAUDE.md.bak CLAUDE.md` and report the failure. Otherwise output `✓ CLAUDE.md workflow block upgraded to <vN> (backup: CLAUDE.md.bak)`.
 
 ## Load Context
 
