@@ -4,6 +4,16 @@ All notable changes to the pmcontext plugin are documented here.
 
 ---
 
+## [1.2.5] — 2026-07-17
+
+### Fixed
+- **Releases were untagged since 1.0.4.** Tagging silently lapsed nine versions ago (1.0.5 through 1.2.4), so nothing on GitHub's tags page showed the current release — the `marketplace.json` pin is machine-facing and invisible there. All nine backfilled at their code commits, verified against the `plugin.json` version in each tagged tree.
+
+### Added
+- `check-release.sh` now asserts the current version has a `pmcontext--v<version>` tag, that it is pushed, and that it points at a tree whose `plugin.json` matches — a mislabeled tag is worse than none.
+
+---
+
 ## [1.2.4] — 2026-07-17
 
 ### Fixed

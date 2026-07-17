@@ -132,6 +132,24 @@ else
   fail "CHANGELOG.md has no '## [$VERSION]' heading"
 fi
 
+# Tags are how a human finds a release on GitHub — the pin is machine-facing and
+# invisible there. Tagging silently lapsed after 1.0.4 and went unnoticed for nine
+# versions, because nothing looked.
+TAG="pmcontext--v${VERSION}"
+if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+  fail "no tag $TAG — run: git tag -a $TAG <code-commit> -m \"pmcontext $VERSION\""
+elif ! git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
+  fail "tag $TAG exists locally but is not pushed — run: git push origin --tags"
+else
+  TAGGED_VERSION=$(git show "$TAG:.claude-plugin/plugin.json" 2>/dev/null \
+                   | python3 -c 'import json,sys;print(json.load(sys.stdin)["version"])' 2>/dev/null)
+  if [ "$TAGGED_VERSION" != "$VERSION" ]; then
+    fail "$TAG points at a tree whose plugin.json says $TAGGED_VERSION — mislabeled tag"
+  else
+    pass "$TAG exists, is pushed, and matches plugin.json"
+  fi
+fi
+
 MARKET_DESC=$(json "$MARKET_JSON" '["plugins"][0]["description"]')
 PLUGIN_DESC=$(json "$PLUGIN_JSON" '["description"]')
 if [ "$MARKET_DESC" = "$PLUGIN_DESC" ]; then
